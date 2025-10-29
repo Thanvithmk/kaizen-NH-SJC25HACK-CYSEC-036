@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import { simulationAPI } from "../services/api";
+import { simulationAPI, employeeAPI } from "../services/api";
 import socketService from "../services/socket";
 
 const PageContainer = styled.div`
@@ -376,17 +376,47 @@ const EmployeeLogin = () => {
     setLoading(true);
 
     try {
-      // TODO: Replace with actual API call when backend is ready
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const response = await employeeAPI.login({
+        employeeId: formData.employeeId.toUpperCase(),
+        password: formData.password,
+        ip_address: "127.0.0.1", // In production, get actual IP
+        location: {
+          country: "United States",
+          city: "New York",
+          latitude: 40.7128,
+          longitude: -74.0060,
+        },
+      });
 
-      localStorage.setItem("isLoggedIn", "true");
-      localStorage.setItem("employeeId", formData.employeeId);
-      localStorage.setItem("loginTime", new Date().toISOString());
+      if (response.success) {
+        localStorage.setItem("isLoggedIn", "true");
+        localStorage.setItem("employeeId", response.employee.emp_token);
+        localStorage.setItem("employeeName", response.employee.emp_name);
+        localStorage.setItem("loginTime", new Date().toISOString());
 
-      toast.success(`Welcome, ${formData.employeeId}!`);
-      navigate("/simulation");
+        toast.success(`Welcome, ${response.employee.emp_name}! (Risk: ${response.riskLevel})`);
+        navigate("/simulation");
+      }
     } catch (err) {
-      setError(err.message || "Login failed. Please try again.");
+      const errorMsg = err.response?.data?.message || "Login failed. Please try again.";
+      const failedAttempts = err.response?.data?.failedAttempts;
+      const riskLevel = err.response?.data?.riskLevel;
+      
+      if (failedAttempts) {
+        setError(`${errorMsg} (Attempt ${failedAttempts} - Risk: ${riskLevel})`);
+        
+        if (failedAttempts >= 5) {
+          toast.error("🚨 HIGH RISK: Multiple failed login attempts detected!", {
+            autoClose: 5000,
+          });
+        } else if (failedAttempts >= 3) {
+          toast.warning("⚠️ MEDIUM RISK: Multiple failed attempts detected", {
+            autoClose: 4000,
+          });
+        }
+      } else {
+        setError(errorMsg);
+      }
     } finally {
       setLoading(false);
     }

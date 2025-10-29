@@ -5,6 +5,7 @@ const BulkDownloadAlert = require("../models/BulkDownloadAlert");
 const GeographicAlert = require("../models/GeographicAlert");
 const ActiveThreat = require("../models/ActiveThreat");
 const EmployeePattern = require("../models/EmployeePattern");
+const bcrypt = require("bcryptjs");
 const {
   evaluateLoginActivity,
   evaluateBulkDownload,
@@ -21,16 +22,22 @@ router.post("/login-threat", async (req, res) => {
     } = req.body;
 
     // Find or create employee pattern
-    let employeePattern = await EmployeePattern.findOne({ employee_token });
+    let employeePattern = await EmployeePattern.findOne({
+      emp_token: employee_token,
+    });
     if (!employeePattern) {
+      // Hash default password
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash("password123", salt);
+
       employeePattern = await EmployeePattern.create({
-        employee_token,
-        employee_name: `Employee ${employee_token}`,
-        department: "Demo Department",
-        typical_login_hours: { start: 9, end: 17 },
-        typical_locations: [{ country: "United States", city: "New York" }],
-        risk_score: 0,
-        alert_count: 0,
+        emp_token: employee_token,
+        emp_name: `Employee ${employee_token}`,
+        emp_id: employee_token,
+        password: hashedPassword,
+        country: "United States",
+        city: "New York",
+        status: 1,
       });
     }
 
@@ -130,16 +137,22 @@ router.post("/bulk-download-threat", async (req, res) => {
       severity = "High",
     } = req.body;
 
-    let employeePattern = await EmployeePattern.findOne({ employee_token });
+    let employeePattern = await EmployeePattern.findOne({
+      emp_token: employee_token,
+    });
     if (!employeePattern) {
+      // Hash default password
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash("password123", salt);
+
       employeePattern = await EmployeePattern.create({
-        employee_token,
-        employee_name: `Employee ${employee_token}`,
-        department: "Demo Department",
-        typical_download_size: 50, // MB
-        typical_download_count: 10,
-        risk_score: 0,
-        alert_count: 0,
+        emp_token: employee_token,
+        emp_name: `Employee ${employee_token}`,
+        emp_id: employee_token,
+        password: hashedPassword,
+        country: "United States",
+        city: "New York",
+        status: 1,
       });
     }
 
@@ -231,22 +244,22 @@ router.post("/geographic-threat", async (req, res) => {
       severity = "Critical",
     } = req.body;
 
-    let employeePattern = await EmployeePattern.findOne({ employee_token });
+    let employeePattern = await EmployeePattern.findOne({
+      emp_token: employee_token,
+    });
     if (!employeePattern) {
+      // Hash default password
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash("password123", salt);
+
       employeePattern = await EmployeePattern.create({
-        employee_token,
-        employee_name: `Employee ${employee_token}`,
-        department: "Demo Department",
-        typical_locations: [
-          {
-            country: "United States",
-            city: "New York",
-            latitude: 40.7128,
-            longitude: -74.006,
-          },
-        ],
-        risk_score: 0,
-        alert_count: 0,
+        emp_token: employee_token,
+        emp_name: `Employee ${employee_token}`,
+        emp_id: employee_token,
+        password: hashedPassword,
+        country: "United States",
+        city: "New York",
+        status: 1,
       });
     }
 
@@ -273,9 +286,9 @@ router.post("/geographic-threat", async (req, res) => {
           latitude: 39.0392,
           longitude: 125.7625,
         },
-        previous_location: employeePattern.typical_locations[0] || {
-          country: "United States",
-          city: "New York",
+        previous_location: {
+          country: employeePattern.country || "United States",
+          city: employeePattern.city || "New York",
         },
       },
       new_location: {
@@ -285,9 +298,9 @@ router.post("/geographic-threat", async (req, res) => {
           latitude: 55.7558,
           longitude: 37.6173,
         },
-        previous_location: employeePattern.typical_locations[0] || {
-          country: "United States",
-          city: "New York",
+        previous_location: {
+          country: employeePattern.country || "United States",
+          city: employeePattern.city || "New York",
         },
       },
     };

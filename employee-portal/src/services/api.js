@@ -10,6 +10,21 @@ const api = axios.create({
   },
 });
 
+// Employee API
+export const employeeAPI = {
+  // Employee Login
+  login: async (data) => {
+    const response = await api.post("/employees/login", data);
+    return response.data;
+  },
+
+  // Employee Registration
+  register: async (data) => {
+    const response = await api.post("/employees/register", data);
+    return response.data;
+  },
+};
+
 // Simulation API
 export const simulationAPI = {
   // Simulate Login Threat
