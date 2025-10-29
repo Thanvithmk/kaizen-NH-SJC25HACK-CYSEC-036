@@ -22,20 +22,56 @@ const MainContent = styled.main`
 
 const Header = styled.div`
   margin-bottom: 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
 
-  h1 {
-    font-size: 32px;
-    font-weight: 800;
-    color: #fff;
-    margin-bottom: 8px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
+  .header-content {
+    h1 {
+      font-size: 32px;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    p {
+      color: #a78bfa;
+      font-size: 14px;
+    }
+  }
+`;
+
+const DownloadButton = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(124, 58, 237, 0.6);
   }
 
-  p {
-    color: #a78bfa;
-    font-size: 14px;
+  &:active {
+    transform: translateY(0);
+  }
+
+  .icon {
+    font-size: 16px;
   }
 `;
 
@@ -214,7 +250,7 @@ const SolvedThreats = () => {
   const [filter, setFilter] = useState("all");
   const [stats, setStats] = useState({
     total: 0,
-    critical: 0,
+    medium: 0,
     high: 0,
   });
 
@@ -241,14 +277,14 @@ const SolvedThreats = () => {
 
         // Calculate stats
         const total = response.data.alerts.length;
-        const critical = response.data.alerts.filter(
-          (t) => t.risk_level === "Critical"
+        const medium = response.data.alerts.filter(
+          (t) => t.risk_level === "Medium"
         ).length;
         const high = response.data.alerts.filter(
           (t) => t.risk_level === "High"
         ).length;
 
-        setStats({ total, critical, high });
+        setStats({ total, medium, high });
       }
     } catch (error) {
       toast.error("Failed to load solved threats");
@@ -269,6 +305,50 @@ const SolvedThreats = () => {
     });
   };
 
+  const handleDownload = () => {
+    if (threats.length === 0) {
+      toast.warning("No data to download");
+      return;
+    }
+
+    // Create CSV content
+    const headers = [
+      "Date & Time",
+      "Employee Token",
+      "Type",
+      "Risk Score",
+      "Risk Level",
+      "Details",
+      "Status",
+    ];
+    const csvContent = [
+      headers.join(","),
+      ...threats.map((threat) =>
+        [
+          formatDate(threat.alert_date_time),
+          threat.employee_token,
+          threat.alert_type,
+          threat.risk_score,
+          threat.risk_level,
+          threat.details?.filename || threat.details?.anomalies?.[0] || "N/A",
+          "Resolved",
+        ]
+          .map((field) => `"${field}"`)
+          .join(",")
+      ),
+    ].join("\n");
+
+    // Download
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `solved-threats-${new Date().toISOString().split("T")[0]}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+    toast.success("Solved threats exported successfully!");
+  };
+
   if (loading) {
     return (
       <DashboardLayout>
@@ -285,8 +365,14 @@ const SolvedThreats = () => {
       <Sidebar />
       <MainContent>
         <Header>
-          <h1>Solved Threats</h1>
-          <p>Resolved security threats</p>
+          <div className="header-content">
+            <h1>Solved Threats</h1>
+            <p>Resolved security threats</p>
+          </div>
+          <DownloadButton onClick={handleDownload}>
+            <span className="icon">⬇</span>
+            <span>Download CSV</span>
+          </DownloadButton>
         </Header>
 
         <StatsBar>
@@ -295,8 +381,8 @@ const SolvedThreats = () => {
             <div className="value">{stats.total}</div>
           </StatCard>
           <StatCard>
-            <div className="label">Critical</div>
-            <div className="value">{stats.critical}</div>
+            <div className="label">Medium Risk</div>
+            <div className="value">{stats.medium}</div>
           </StatCard>
           <StatCard>
             <div className="label">High Risk</div>

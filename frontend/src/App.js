@@ -9,12 +9,10 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { AuthProvider } from "./context/AuthContext";
 import { DashboardProvider } from "./context/DashboardContext";
-import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import ActiveThreats from "./pages/ActiveThreats";
 import SolvedThreats from "./pages/SolvedThreats";
 import Logs from "./pages/Logs";
-import PrivateRoute from "./components/PrivateRoute";
 
 function App() {
   return (
@@ -23,39 +21,16 @@ function App() {
         <DashboardProvider>
           <div className="App">
             <Routes>
-              <Route path="/login" element={<Login />} />
-              <Route
-                path="/dashboard"
-                element={
-                  <PrivateRoute>
-                    <Dashboard />
-                  </PrivateRoute>
-                }
-              />
+              <Route path="/dashboard" element={<Dashboard />} />
               <Route
                 path="/dashboard/active-threats"
-                element={
-                  <PrivateRoute>
-                    <ActiveThreats />
-                  </PrivateRoute>
-                }
+                element={<ActiveThreats />}
               />
               <Route
                 path="/dashboard/solved-threats"
-                element={
-                  <PrivateRoute>
-                    <SolvedThreats />
-                  </PrivateRoute>
-                }
+                element={<SolvedThreats />}
               />
-              <Route
-                path="/dashboard/logs"
-                element={
-                  <PrivateRoute>
-                    <Logs />
-                  </PrivateRoute>
-                }
-              />
+              <Route path="/dashboard/logs" element={<Logs />} />
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
             </Routes>
             <ToastContainer

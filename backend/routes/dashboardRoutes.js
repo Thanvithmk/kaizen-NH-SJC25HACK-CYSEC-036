@@ -13,11 +13,12 @@ const EmployeePattern = require("../models/EmployeePattern");
  */
 router.get("/stats", async (req, res) => {
   try {
-    // Active users (logged in but not logged out)
-    const activeUsers = await LoginActivity.countDocuments({
+    // Active users (unique employees currently logged in)
+    const activeUsersResult = await LoginActivity.distinct("employee_token", {
       logout_timestamp: null,
       success_status: "Success",
     });
+    const activeUsers = activeUsersResult.length;
 
     // Active threats (unsolved)
     const activeThreats = await ActiveThreat.countDocuments({

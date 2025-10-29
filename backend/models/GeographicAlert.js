@@ -42,7 +42,7 @@ const GeographicAlertSchema = new mongoose.Schema(
     },
     risk_level: {
       type: String,
-      enum: ["Low", "Medium", "High", "Critical"],
+      enum: ["Low", "Medium", "High"],
       default: "Medium",
     },
     verified: {

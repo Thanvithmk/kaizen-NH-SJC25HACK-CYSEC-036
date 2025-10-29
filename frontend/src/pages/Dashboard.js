@@ -143,9 +143,8 @@ const Dashboard = () => {
               <div className="name">
                 {user?.employee_name || "Security Admin"}
               </div>
-              <div className="token">{user?.employee_token || "N/A"}</div>
+              
             </UserInfo>
-            <LogoutButton onClick={handleLogout}>Logout</LogoutButton>
           </UserSection>
         </Header>
 

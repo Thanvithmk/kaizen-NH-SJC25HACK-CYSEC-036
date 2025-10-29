@@ -233,11 +233,7 @@ const EmployeeLogin = () => {
       setConnected(false);
     });
 
-    socket.on("new_threat", (threat) => {
-      toast.success(
-        `✅ Threat detected in Security Dashboard!\nType: ${threat.threat_type}`
-      );
-    });
+    // Removed threat notification popup - monitoring should be invisible to employees
 
     return () => {
       socketService.disconnect();

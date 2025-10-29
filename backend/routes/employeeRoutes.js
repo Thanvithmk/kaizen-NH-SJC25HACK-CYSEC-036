@@ -88,7 +88,7 @@ router.post("/login", async (req, res) => {
         riskScore = 70;
         severityLevel = "High";
         anomalies.push(
-          `Critical: ${recentFailedAttempts} failed login attempts in 30 minutes`
+          `High: ${recentFailedAttempts} failed login attempts in 30 minutes`
         );
       } else if (recentFailedAttempts >= 3) {
         riskScore = 50;

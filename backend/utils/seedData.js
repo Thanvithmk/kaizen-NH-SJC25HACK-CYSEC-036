@@ -85,21 +85,25 @@ async function seedDatabase() {
     await EmployeePattern.insertMany(employees);
     console.log(`✓ Created ${employees.length} employees`);
 
-    // Sample login activities
+    // Sample login activities with varied patterns
     const now = new Date();
     const loginActivities = [
       {
         employee_token: "EMP001",
-        login_timestamp: new Date(now - 2 * 60 * 60 * 1000), // 2 hours ago
+        login_timestamp: new Date(now - 5 * 60 * 1000), // 5 minutes ago
         ip_address: "192.168.1.100",
+        city: "New York",
+        country: "United States",
         success_status: "Success",
         failed_attempts_count: 0,
         risk_level: "Low",
       },
       {
         employee_token: "EMP002",
-        login_timestamp: new Date(now - 1 * 60 * 60 * 1000), // 1 hour ago
+        login_timestamp: new Date(now - 15 * 60 * 1000), // 15 minutes ago
         ip_address: "192.168.2.50",
+        city: "San Francisco",
+        country: "United States",
         success_status: "Success",
         failed_attempts_count: 0,
         risk_level: "Low",
@@ -108,6 +112,81 @@ async function seedDatabase() {
         employee_token: "EMP003",
         login_timestamp: new Date(now - 30 * 60 * 1000), // 30 minutes ago
         ip_address: "192.168.1.105",
+        city: "New York",
+        country: "United States",
+        success_status: "Success",
+        failed_attempts_count: 0,
+        risk_level: "Low",
+      },
+      {
+        employee_token: "EMP004",
+        login_timestamp: new Date(now - 45 * 60 * 1000), // 45 minutes ago
+        ip_address: "10.50.30.15",
+        city: "London",
+        country: "United Kingdom",
+        success_status: "Success",
+        failed_attempts_count: 0,
+        risk_level: "Medium",
+      },
+      {
+        employee_token: "EMP005",
+        login_timestamp: new Date(now - 60 * 60 * 1000), // 1 hour ago
+        ip_address: "192.168.1.75",
+        city: "New York",
+        country: "United States",
+        success_status: "Success",
+        failed_attempts_count: 0,
+        risk_level: "Low",
+      },
+      {
+        employee_token: "EMP001",
+        login_timestamp: new Date(now - 2 * 60 * 60 * 1000), // 2 hours ago
+        logout_timestamp: new Date(now - 10 * 60 * 1000), // Logged out 10 mins ago
+        ip_address: "192.168.1.100",
+        city: "New York",
+        country: "United States",
+        success_status: "Success",
+        failed_attempts_count: 0,
+        risk_level: "Low",
+      },
+      {
+        employee_token: "EMP003",
+        login_timestamp: new Date(now - 3 * 60 * 60 * 1000), // 3 hours ago
+        ip_address: "45.123.78.90",
+        city: "Unknown",
+        country: "Unknown",
+        success_status: "Success",
+        failed_attempts_count: 0,
+        risk_level: "High",
+      },
+      {
+        employee_token: "EMP002",
+        login_timestamp: new Date(now - 4 * 60 * 60 * 1000), // 4 hours ago
+        logout_timestamp: new Date(now - 1 * 60 * 60 * 1000), // Logged out 1 hour ago
+        ip_address: "192.168.2.50",
+        city: "San Francisco",
+        country: "United States",
+        success_status: "Success",
+        failed_attempts_count: 0,
+        risk_level: "Low",
+      },
+      {
+        employee_token: "EMP004",
+        login_timestamp: new Date(now - 5 * 60 * 60 * 1000), // 5 hours ago
+        ip_address: "10.50.30.20",
+        city: "London",
+        country: "United Kingdom",
+        success_status: "Failed",
+        failed_attempts_count: 3,
+        risk_level: "High",
+      },
+      {
+        employee_token: "EMP005",
+        login_timestamp: new Date(now - 6 * 60 * 60 * 1000), // 6 hours ago
+        logout_timestamp: new Date(now - 90 * 60 * 1000), // Logged out 90 mins ago
+        ip_address: "192.168.1.85",
+        city: "New York",
+        country: "United States",
         success_status: "Success",
         failed_attempts_count: 0,
         risk_level: "Low",
@@ -138,4 +217,3 @@ async function seedDatabase() {
 
 // Run seeder
 seedDatabase();
-
