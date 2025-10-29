@@ -1,0 +1,75 @@
+{
+  "files": [
+    {
+      "filename": "Employee_Handbook_2024.pdf",
+      "sizeMB": 2.5,
+      "type": "pdf",
+      "description": "Company employee handbook and policies",
+      "isSensitive": false
+    },
+    {
+      "filename": "Meeting_Notes_Q1.docx",
+      "sizeMB": 0.8,
+      "type": "docx",
+      "description": "Quarterly meeting notes",
+      "isSensitive": false
+    },
+    {
+      "filename": "Project_Timeline.xlsx",
+      "sizeMB": 1.2,
+      "type": "xlsx",
+      "description": "Project timeline and milestones",
+      "isSensitive": false
+    },
+    {
+      "filename": "Customer_Database_Report.xlsx",
+      "sizeMB": 150,
+      "type": "xlsx",
+      "description": "Customer analytics and reports",
+      "isSensitive": true
+    },
+    {
+      "filename": "Financial_Summary_2024.pdf",
+      "sizeMB": 85,
+      "type": "pdf",
+      "description": "Annual financial summary",
+      "isSensitive": true
+    },
+    {
+      "filename": "Product_Designs_Archive.zip",
+      "sizeMB": 250,
+      "type": "zip",
+      "description": "Product design files and mockups",
+      "isSensitive": false
+    },
+    {
+      "filename": "Confidential_Client_Data.csv",
+      "sizeMB": 2500,
+      "type": "csv",
+      "description": "Confidential client information database",
+      "isSensitive": true
+    },
+    {
+      "filename": "Payroll_Records_2024.xlsx",
+      "sizeMB": 1200,
+      "type": "xlsx",
+      "description": "Employee payroll and salary information",
+      "isSensitive": true
+    },
+    {
+      "filename": "Backup_Database_Full.zip",
+      "sizeMB": 5000,
+      "type": "zip",
+      "description": "Complete database backup file",
+      "isSensitive": true
+    },
+    {
+      "filename": "Source_Code_Repository.zip",
+      "sizeMB": 3500,
+      "type": "zip",
+      "description": "Complete source code repository",
+      "isSensitive": true
+    }
+  ],
+  "lastUpdated": "2025-10-29T04:10:08.046Z"
+}

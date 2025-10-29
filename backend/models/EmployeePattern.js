@@ -16,6 +16,11 @@ const EmployeePatternSchema = new mongoose.Schema(
       unique: true,
       match: /^EMP\d{3,}$/,
     },
+    password: {
+      type: String,
+      required: true,
+      minlength: 6,
+    },
     location_type: {
       type: String,
       default: "Office",

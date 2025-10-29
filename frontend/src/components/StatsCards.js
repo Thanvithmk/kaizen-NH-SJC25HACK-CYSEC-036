@@ -43,7 +43,8 @@ const Card = styled.div`
   &:hover {
     transform: translateY(-4px);
     box-shadow: 0 12px 32px rgba(139, 92, 246, 0.3);
-    border-color: ${(props) => props.hoverBorder || props.borderColor || "#8b5cf6"};
+    border-color: ${(props) =>
+      props.hoverBorder || props.borderColor || "#8b5cf6"};
   }
 `;
 
@@ -88,7 +89,7 @@ const CardFooter = styled.div`
 const RiskCard = styled(Card)`
   background: ${(props) => props.riskBg};
   border-color: ${(props) => props.riskBorder};
-  
+
   &:hover {
     border-color: ${(props) => props.riskBorder};
   }
@@ -104,10 +105,10 @@ const StatsCards = ({ stats }) => {
           hoverBorder="#8b5cf6"
         >
           <CardHeader>
-            <CardIcon>👥</CardIcon>
+            <CardIcon>👤</CardIcon>
             <CardTitle>Active Users</CardTitle>
           </CardHeader>
-          <CardValue>{stats.activeUsers || 2735}</CardValue>
+          <CardValue>{stats.activeUsers || 0}</CardValue>
           {stats.totalEmployees > 0 && (
             <CardFooter>Total: {stats.totalEmployees}</CardFooter>
           )}
@@ -119,11 +120,11 @@ const StatsCards = ({ stats }) => {
           hoverBorder="#8b5cf6"
         >
           <CardHeader>
-            <CardIcon>✅</CardIcon>
+            <CardIcon>✓</CardIcon>
             <CardTitle>Solved Incidents</CardTitle>
           </CardHeader>
-          <CardValue>{stats.solvedThreats || 800}</CardValue>
-          <CardFooter>Last 2222</CardFooter>
+          <CardValue>{stats.solvedThreats || 0}</CardValue>
+          <CardFooter>Total resolved threats</CardFooter>
         </Card>
 
         <Card
@@ -132,7 +133,7 @@ const StatsCards = ({ stats }) => {
           hoverBorder="#8b5cf6"
         >
           <CardHeader>
-            <CardIcon>🛡️</CardIcon>
+            <CardIcon>◈</CardIcon>
             <CardTitle>System Status</CardTitle>
           </CardHeader>
           <CardValue fontSize="32px">
@@ -148,10 +149,11 @@ const StatsCards = ({ stats }) => {
           hoverBorder="#8b5cf6"
         >
           <CardHeader>
-            <CardIcon>⚠️</CardIcon>
+            <CardIcon>⚠</CardIcon>
             <CardTitle>Active threats</CardTitle>
           </CardHeader>
-          <CardValue>{stats.activeThreats || 1500}</CardValue>
+          <CardValue>{stats.activeThreats || 0}</CardValue>
+          <CardFooter>Unsolved threats</CardFooter>
         </Card>
 
         <RiskCard
@@ -161,7 +163,8 @@ const StatsCards = ({ stats }) => {
           <CardHeader>
             <CardTitle>High Risk</CardTitle>
           </CardHeader>
-          <CardValue>{stats.highRiskAlerts || 80}</CardValue>
+          <CardValue>{stats.highRiskAlerts || 0}</CardValue>
+          <CardFooter>Score ≥ 50</CardFooter>
         </RiskCard>
 
         <RiskCard
@@ -171,7 +174,8 @@ const StatsCards = ({ stats }) => {
           <CardHeader>
             <CardTitle>Medium Risk</CardTitle>
           </CardHeader>
-          <CardValue>{stats.mediumRiskAlerts || 160}</CardValue>
+          <CardValue>{stats.mediumRiskAlerts || 0}</CardValue>
+          <CardFooter>Score 25-49</CardFooter>
         </RiskCard>
 
         <RiskCard
@@ -181,7 +185,8 @@ const StatsCards = ({ stats }) => {
           <CardHeader>
             <CardTitle>Low Risk</CardTitle>
           </CardHeader>
-          <CardValue>{stats.lowRiskAlerts || 1260}</CardValue>
+          <CardValue>{stats.lowRiskAlerts || 0}</CardValue>
+          <CardFooter>Score &lt; 25</CardFooter>
         </RiskCard>
       </BottomRow>
     </StatsSection>

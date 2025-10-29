@@ -52,7 +52,7 @@ const DownloadButton = styled.button`
 const TableWrapper = styled.div`
   flex: 1;
   overflow-y: auto;
-  
+
   &::-webkit-scrollbar {
     width: 6px;
   }
@@ -65,7 +65,7 @@ const TableWrapper = styled.div`
   &::-webkit-scrollbar-thumb {
     background: rgba(139, 92, 246, 0.3);
     border-radius: 3px;
-    
+
     &:hover {
       background: rgba(139, 92, 246, 0.5);
     }
@@ -168,13 +168,13 @@ const EmptyState = styled.div`
   justify-content: center;
   padding: 40px;
   color: #a78bfa;
-  
+
   .icon {
     font-size: 48px;
     margin-bottom: 12px;
     opacity: 0.5;
   }
-  
+
   .message {
     font-size: 14px;
   }
@@ -191,61 +191,23 @@ const UserAccessLog = () => {
   const fetchLogs = async () => {
     try {
       setLoading(true);
-      const response = await dashboardAPI.getRecentActivity();
-      setLogs(response.activities || []);
+      const response = await dashboardAPI.getRecentActivity(5);
+      // Map the response to include action field
+      const logsWithAction = (response.activity || []).map((log) => ({
+        ...log,
+        action: log.logout_timestamp ? "Logged Out" : "Logged In",
+        // Map status to expected format
+        success_status:
+          log.risk_level === "High"
+            ? "Blocked"
+            : log.risk_level === "Medium"
+            ? "Pending"
+            : log.success_status || "Success",
+      }));
+      setLogs(logsWithAction);
     } catch (error) {
       console.error("Error fetching logs:", error);
-      // Use sample data if API fails
-      setLogs([
-        {
-          _id: "1",
-          employee_token: "EMP167A",
-          ip_address: "192.24.134.90",
-          login_timestamp: new Date().toISOString(),
-          action: "Logged In",
-          success_status: "Success",
-        },
-        {
-          _id: "2",
-          employee_token: "EMP144A",
-          ip_address: "143.34.198.15",
-          login_timestamp: new Date().toISOString(),
-          action: "Odd hour",
-          success_status: "Pending",
-        },
-        {
-          _id: "3",
-          employee_token: "EMP148C",
-          ip_address: "120.84.132.23",
-          login_timestamp: new Date().toISOString(),
-          action: "Logged In",
-          success_status: "Success",
-        },
-        {
-          _id: "4",
-          employee_token: "EMP189D",
-          ip_address: "113.83.144.97",
-          login_timestamp: new Date().toISOString(),
-          action: "Pin change",
-          success_status: "Success",
-        },
-        {
-          _id: "5",
-          employee_token: "EMP137B",
-          ip_address: "102.29.102.10",
-          login_timestamp: new Date().toISOString(),
-          action: "Suspicious",
-          success_status: "Blocked",
-        },
-        {
-          _id: "6",
-          employee_token: "EMP126A",
-          ip_address: "190.32.455.21",
-          login_timestamp: new Date().toISOString(),
-          action: "Odd hour",
-          success_status: "Pending",
-        },
-      ]);
+      setLogs([]);
     } finally {
       setLoading(false);
     }
@@ -349,5 +311,3 @@ const UserAccessLog = () => {
 };
 
 export default UserAccessLog;
-
-

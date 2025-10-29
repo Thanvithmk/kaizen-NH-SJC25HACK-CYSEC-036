@@ -42,10 +42,17 @@ class AuthService {
     try {
       const token = await this.generateEmployeeToken();
 
+      // Hash password before storing
+      const hashedPassword = await bcrypt.hash(
+        employeeData.password || "password123",
+        10
+      );
+
       const employee = await EmployeePattern.create({
         emp_name: employeeData.emp_name || "",
         emp_id: employeeData.emp_id || "",
         emp_token: token,
+        password: hashedPassword,
         location_type: employeeData.location_type || "Office",
         ip_range: employeeData.ip_range || "",
         usual_login_time: employeeData.usual_login_time || "09:00",
@@ -79,7 +86,15 @@ class AuthService {
       if (!employee) {
         // Record failed attempt
         await this.recordFailedLogin(employee_token, ip_address);
-        throw new Error("Invalid employee token");
+        throw new Error("Invalid employee ID or password");
+      }
+
+      // Verify password
+      const isPasswordValid = await bcrypt.compare(password, employee.password);
+      if (!isPasswordValid) {
+        // Record failed attempt
+        await this.recordFailedLogin(employee_token, ip_address);
+        throw new Error("Invalid employee ID or password");
       }
 
       // Get previous login for geographic analysis
@@ -123,7 +138,7 @@ class AuthService {
           });
 
           // Create active threat
-          await ActiveThreat.create({
+          const geoThreat = await ActiveThreat.create({
             alert_date_time: new Date(),
             risk_score: anomaly.risk_score,
             alert_type: "geo",
@@ -139,6 +154,16 @@ class AuthService {
           });
 
           console.log(`🚨 Geographic alert created for ${employee_token}`);
+
+          // Emit real-time update
+          if (global.emitAlert) {
+            global.emitAlert({
+              type: "geo",
+              threat: geoThreat,
+              message: `Geographic anomaly: ${anomaly.current_city}, ${anomaly.current_country}`,
+              employee_token,
+            });
+          }
         }
       }
 
@@ -155,7 +180,7 @@ class AuthService {
         await loginActivity.save();
 
         // Create active threat for suspicious login time
-        await ActiveThreat.create({
+        const loginThreat = await ActiveThreat.create({
           alert_date_time: new Date(),
           risk_score: loginRisk.riskScore,
           alert_type: "login",
@@ -169,6 +194,16 @@ class AuthService {
         });
 
         console.log(`🚨 Login time alert created for ${employee_token}`);
+
+        // Emit real-time update
+        if (global.emitAlert) {
+          global.emitAlert({
+            type: "login",
+            threat: loginThreat,
+            message: `Suspicious login time detected`,
+            employee_token,
+          });
+        }
       }
 
       // Generate JWT token
@@ -238,7 +273,7 @@ class AuthService {
 
     // Create threat if high risk
     if (riskData.riskScore >= 25) {
-      await ActiveThreat.create({
+      const failedLoginThreat = await ActiveThreat.create({
         alert_date_time: new Date(),
         risk_score: riskData.riskScore,
         alert_type: "login",
@@ -250,6 +285,16 @@ class AuthService {
           reasons: riskData.reasons,
         },
       });
+
+      // Emit real-time update
+      if (global.emitAlert) {
+        global.emitAlert({
+          type: "login",
+          threat: failedLoginThreat,
+          message: `Failed login attempts: ${failedCount}`,
+          employee_token,
+        });
+      }
     }
   }
 
@@ -355,4 +400,3 @@ class AuthService {
 }
 
 module.exports = new AuthService();
-

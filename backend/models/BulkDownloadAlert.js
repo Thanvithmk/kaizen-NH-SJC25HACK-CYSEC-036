@@ -23,7 +23,7 @@ const BulkDownloadAlertSchema = new mongoose.Schema(
     },
     risk_level: {
       type: String,
-      enum: ["Low", "Medium", "High", "Critical"],
+      enum: ["Low", "Medium", "High"],
       default: "Low",
     },
     folder_path: {

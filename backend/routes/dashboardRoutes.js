@@ -13,11 +13,12 @@ const EmployeePattern = require("../models/EmployeePattern");
  */
 router.get("/stats", async (req, res) => {
   try {
-    // Active users (logged in but not logged out)
-    const activeUsers = await LoginActivity.countDocuments({
+    // Active users (unique employees currently logged in)
+    const activeUsersResult = await LoginActivity.distinct("employee_token", {
       logout_timestamp: null,
       success_status: "Success",
     });
+    const activeUsers = activeUsersResult.length;
 
     // Active threats (unsolved)
     const activeThreats = await ActiveThreat.countDocuments({
@@ -40,9 +41,21 @@ router.get("/stats", async (req, res) => {
       alert_date_time: { $gte: last24Hours },
     });
 
-    // High risk alerts
+    // High risk alerts (score >= 50)
     const highRiskAlerts = await ActiveThreat.countDocuments({
       risk_score: { $gte: 50 },
+      solved: "N",
+    });
+
+    // Medium risk alerts (25 <= score < 50)
+    const mediumRiskAlerts = await ActiveThreat.countDocuments({
+      risk_score: { $gte: 25, $lt: 50 },
+      solved: "N",
+    });
+
+    // Low risk alerts (score < 25)
+    const lowRiskAlerts = await ActiveThreat.countDocuments({
+      risk_score: { $lt: 25 },
       solved: "N",
     });
 
@@ -61,6 +74,8 @@ router.get("/stats", async (req, res) => {
         totalEmployees,
         recentAlertsCount,
         highRiskAlerts,
+        mediumRiskAlerts,
+        lowRiskAlerts,
         systemStatus: "Online",
         lastUpdated: new Date(),
       },
@@ -169,4 +184,3 @@ router.get("/recent-activity", async (req, res) => {
 });
 
 module.exports = router;
-

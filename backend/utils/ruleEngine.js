@@ -309,4 +309,61 @@ class RuleEngine {
   }
 }
 
-module.exports = new RuleEngine();
+const ruleEngineInstance = new RuleEngine();
+
+// Export wrapper functions for simulation routes compatibility
+module.exports = ruleEngineInstance;
+module.exports.evaluateLoginActivity = (loginActivity, employeePattern) => {
+  const loginData = {
+    failed_attempts_count: loginActivity.success_status === "Failed" ? 1 : 0,
+    login_timestamp: loginActivity.login_timestamp,
+    success_status: loginActivity.success_status,
+    previousFailedAttempts: false,
+  };
+
+  const result = ruleEngineInstance.calculateLoginRisk(loginData);
+
+  return {
+    total_risk_score: result.riskScore,
+    severity: result.riskLevel,
+    anomalies_detected: result.reasons,
+  };
+};
+
+module.exports.evaluateBulkDownload = (bulkDownload, employeePattern) => {
+  const downloadData = {
+    total_files: bulkDownload.total_files,
+    total_size_mb: bulkDownload.total_size_mb,
+    timestamp: bulkDownload.timestamp,
+  };
+
+  const result = ruleEngineInstance.calculateBulkDownloadRisk(downloadData);
+
+  return {
+    total_risk_score: result.riskScore,
+    severity: result.riskLevel,
+    anomalies_detected: result.reasons,
+  };
+};
+
+module.exports.evaluateGeographicAnomaly = (geoAlert, employeePattern) => {
+  const geoData = {
+    current_country: geoAlert.current_location?.country || "",
+    anomaly_type: geoAlert.is_impossible_travel
+      ? "ImpossibleTravel"
+      : geoAlert.is_high_risk_country
+      ? "RiskCountry"
+      : "NewCountry",
+    time_between_logins_hours: geoAlert.time_difference_hours || 0,
+    minimum_travel_time_hours: geoAlert.distance_km / 800 + 2 || 0,
+    alert_timestamp: geoAlert.alert_timestamp,
+  };
+
+  const result = ruleEngineInstance.calculateGeographicRisk(geoData);
+
+  return {
+    total_risk_score: result.riskScore,
+    severity: result.riskLevel,
+    anomalies_detected: result.reasons,
+  };
+};

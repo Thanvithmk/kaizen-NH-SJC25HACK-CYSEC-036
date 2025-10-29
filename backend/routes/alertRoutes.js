@@ -133,11 +133,11 @@ router.get("/:id", async (req, res) => {
 });
 
 /**
- * @route   PUT /api/alerts/:id/solve
+ * @route   PUT/PATCH /api/alerts/:id/solve
  * @desc    Mark alert as solved
  * @access  Private
  */
-router.put("/:id/solve", async (req, res) => {
+const markAsSolved = async (req, res) => {
   try {
     const alert = await ActiveThreat.findByIdAndUpdate(
       req.params.id,
@@ -166,7 +166,10 @@ router.put("/:id/solve", async (req, res) => {
       message: error.message,
     });
   }
-});
+};
+
+router.put("/:id/solve", markAsSolved);
+router.patch("/:id/solve", markAsSolved);
 
 /**
  * @route   DELETE /api/alerts/:id
@@ -197,4 +200,3 @@ router.delete("/:id", async (req, res) => {
 });
 
 module.exports = router;
-
