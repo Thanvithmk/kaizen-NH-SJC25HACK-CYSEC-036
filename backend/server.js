@@ -66,6 +66,7 @@ app.use("/api/dashboard", require("./routes/dashboardRoutes"));
 app.use("/api/alerts", require("./routes/alertRoutes"));
 app.use("/api/geographic", require("./routes/geographicRoutes"));
 app.use("/api/employees", require("./routes/employeeRoutes"));
+app.use("/api/files", require("./routes/fileRoutes"));
 app.use("/api/simulation", require("./routes/simulationRoutes"));
 
 // Health check endpoint
@@ -90,6 +91,8 @@ app.get("/", (req, res) => {
       alerts: "/api/alerts",
       geographic: "/api/geographic",
       employees: "/api/employees",
+      files: "/api/files",
+      simulation: "/api/simulation",
       health: "/api/health",
     },
   });
