@@ -212,8 +212,10 @@ const ThreatCard = styled.div`
 
   &:hover {
     transform: translateY(-4px);
-    box-shadow: 0 16px 32px ${(props) => props.shadowColor || "rgba(139, 92, 246, 0.3)"};
-    border-color: ${(props) => props.hoverBorderColor || "rgba(139, 92, 246, 0.4)"};
+    box-shadow: 0 16px 32px
+      ${(props) => props.shadowColor || "rgba(139, 92, 246, 0.3)"};
+    border-color: ${(props) =>
+      props.hoverBorderColor || "rgba(139, 92, 246, 0.4)"};
   }
 `;
 
@@ -245,7 +247,8 @@ const ButtonGroup = styled.div`
 const ThreatButton = styled.button`
   padding: 12px 20px;
   background: ${(props) => props.bg || "rgba(255, 255, 255, 0.1)"};
-  border: 2px solid ${(props) => props.borderColor || "rgba(255, 255, 255, 0.2)"};
+  border: 2px solid
+    ${(props) => props.borderColor || "rgba(255, 255, 255, 0.2)"};
   border-radius: 10px;
   color: #e2e8f0;
   font-size: 13px;
@@ -384,7 +387,7 @@ const EmployeeLogin = () => {
           country: "United States",
           city: "New York",
           latitude: 40.7128,
-          longitude: -74.0060,
+          longitude: -74.006,
         },
       });
 
@@ -394,21 +397,29 @@ const EmployeeLogin = () => {
         localStorage.setItem("employeeName", response.employee.emp_name);
         localStorage.setItem("loginTime", new Date().toISOString());
 
-        toast.success(`Welcome, ${response.employee.emp_name}! (Risk: ${response.riskLevel})`);
+        toast.success(
+          `Welcome, ${response.employee.emp_name}! (Risk: ${response.riskLevel})`
+        );
         navigate("/simulation");
       }
     } catch (err) {
-      const errorMsg = err.response?.data?.message || "Login failed. Please try again.";
+      const errorMsg =
+        err.response?.data?.message || "Login failed. Please try again.";
       const failedAttempts = err.response?.data?.failedAttempts;
       const riskLevel = err.response?.data?.riskLevel;
-      
+
       if (failedAttempts) {
-        setError(`${errorMsg} (Attempt ${failedAttempts} - Risk: ${riskLevel})`);
-        
+        setError(
+          `${errorMsg} (Attempt ${failedAttempts} - Risk: ${riskLevel})`
+        );
+
         if (failedAttempts >= 5) {
-          toast.error("🚨 HIGH RISK: Multiple failed login attempts detected!", {
-            autoClose: 5000,
-          });
+          toast.error(
+            "🚨 HIGH RISK: Multiple failed login attempts detected!",
+            {
+              autoClose: 5000,
+            }
+          );
         } else if (failedAttempts >= 3) {
           toast.warning("⚠️ MEDIUM RISK: Multiple failed attempts detected", {
             autoClose: 4000,
@@ -423,9 +434,12 @@ const EmployeeLogin = () => {
   };
 
   const handleForgotPassword = () => {
-    toast.info("Please contact your system administrator to reset your password.", {
-      autoClose: 5000,
-    });
+    toast.info(
+      "Please contact your system administrator to reset your password.",
+      {
+        autoClose: 5000,
+      }
+    );
   };
 
   const simulateThreat = async (threatType, subType) => {
