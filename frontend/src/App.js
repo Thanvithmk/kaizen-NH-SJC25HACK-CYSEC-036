@@ -11,6 +11,9 @@ import { AuthProvider } from "./context/AuthContext";
 import { DashboardProvider } from "./context/DashboardContext";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
+import ActiveThreats from "./pages/ActiveThreats";
+import SolvedThreats from "./pages/SolvedThreats";
+import Logs from "./pages/Logs";
 import PrivateRoute from "./components/PrivateRoute";
 
 function App() {
@@ -26,6 +29,30 @@ function App() {
                 element={
                   <PrivateRoute>
                     <Dashboard />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/dashboard/active-threats"
+                element={
+                  <PrivateRoute>
+                    <ActiveThreats />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/dashboard/solved-threats"
+                element={
+                  <PrivateRoute>
+                    <SolvedThreats />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/dashboard/logs"
+                element={
+                  <PrivateRoute>
+                    <Logs />
                   </PrivateRoute>
                 }
               />
@@ -50,4 +77,3 @@ function App() {
 }
 
 export default App;
-

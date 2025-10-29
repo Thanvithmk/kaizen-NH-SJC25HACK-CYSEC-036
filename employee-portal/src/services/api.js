@@ -25,30 +25,18 @@ export const employeeAPI = {
   },
 };
 
-// Simulation API
-export const simulationAPI = {
-  // Simulate Login Threat
-  simulateLoginThreat: async (data) => {
-    const response = await api.post("/simulation/login-threat", data);
+// File API
+export const fileAPI = {
+  // Get list of available files
+  getFileList: async () => {
+    const response = await api.get("/files/list");
     return response.data;
   },
 
-  // Simulate Bulk Download Threat
-  simulateBulkDownloadThreat: async (data) => {
-    const response = await api.post("/simulation/bulk-download-threat", data);
-    return response.data;
-  },
-
-  // Simulate Geographic Threat
-  simulateGeographicThreat: async (data) => {
-    const response = await api.post("/simulation/geographic-threat", data);
-    return response.data;
-  },
-
-  // Get simulation stats
-  getStats: async () => {
-    const response = await api.get("/simulation/stats");
-    return response.data;
+  // Download a file (returns blob for download)
+  downloadFile: (filename, employeeToken) => {
+    const url = `${API_BASE_URL}/files/download/${filename}?employee_token=${employeeToken}`;
+    return url;
   },
 };
 

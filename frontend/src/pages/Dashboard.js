@@ -62,8 +62,9 @@ const SearchIcon = styled.div`
   left: 18px;
   top: 50%;
   transform: translateY(-50%);
-  font-size: 18px;
+  font-size: 16px;
   color: #a78bfa;
+  font-weight: 600;
 `;
 
 const UserSection = styled.div`
@@ -133,7 +134,7 @@ const Dashboard = () => {
       <MainContent>
         <Header>
           <SearchBar>
-            <SearchIcon>🔍</SearchIcon>
+            <SearchIcon>⌕</SearchIcon>
             <SearchInput type="text" placeholder="Search here" />
           </SearchBar>
 

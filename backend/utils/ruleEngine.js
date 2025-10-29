@@ -332,9 +332,9 @@ module.exports.evaluateLoginActivity = (loginActivity, employeePattern) => {
 
 module.exports.evaluateBulkDownload = (bulkDownload, employeePattern) => {
   const downloadData = {
-    total_files: bulkDownload.file_count,
+    total_files: bulkDownload.total_files,
     total_size_mb: bulkDownload.total_size_mb,
-    timestamp: bulkDownload.download_timestamp,
+    timestamp: bulkDownload.timestamp,
   };
 
   const result = ruleEngineInstance.calculateBulkDownloadRisk(downloadData);

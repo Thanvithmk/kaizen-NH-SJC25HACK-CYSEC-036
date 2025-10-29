@@ -19,6 +19,18 @@ const LoginActivitySchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    city: {
+      type: String,
+      default: "Unknown",
+    },
+    country: {
+      type: String,
+      default: "Unknown",
+    },
+    location: {
+      type: String,
+      default: "Unknown",
+    },
     success_status: {
       type: String,
       enum: ["Success", "Failed"],

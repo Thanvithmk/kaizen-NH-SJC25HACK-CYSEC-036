@@ -44,16 +44,25 @@ router.post("/login", async (req, res) => {
     // Verify password
     const isPasswordValid = await bcrypt.compare(password, employee.password);
 
+    // Mock location data based on employee (in production, use IP geolocation service)
+    const mockLocations = [
+      { city: "New York", country: "United States", location: "New York, US" },
+      { city: "London", country: "United Kingdom", location: "London, UK" },
+      { city: "Tokyo", country: "Japan", location: "Tokyo, JP" },
+      { city: "Sydney", country: "Australia", location: "Sydney, AU" },
+      { city: "Mumbai", country: "India", location: "Mumbai, IN" },
+      { city: "Toronto", country: "Canada", location: "Toronto, CA" },
+    ];
+    const randomLocation =
+      mockLocations[Math.floor(Math.random() * mockLocations.length)];
+
     const loginData = {
       employee_token: employee.emp_token,
-      ip_address: ip_address || "127.0.0.1",
+      ip_address: ip_address || req.ip || "127.0.0.1",
       login_timestamp: new Date(),
-      location: location || {
-        country: employee.country || "Unknown",
-        city: employee.city || "Unknown",
-        latitude: 0,
-        longitude: 0,
-      },
+      city: randomLocation.city,
+      country: randomLocation.country,
+      location: randomLocation.location,
       success_status: isPasswordValid ? "Success" : "Failed",
       failure_reason: isPasswordValid ? null : "Invalid credentials",
     };

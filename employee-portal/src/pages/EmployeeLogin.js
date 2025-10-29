@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import { simulationAPI, employeeAPI } from "../services/api";
+import { employeeAPI } from "../services/api";
 import socketService from "../services/socket";
 
 const PageContainer = styled.div`
@@ -172,113 +172,6 @@ const ErrorMessage = styled.div`
   text-align: center;
 `;
 
-const Divider = styled.div`
-  display: flex;
-  align-items: center;
-  margin: 40px 0 30px;
-  gap: 16px;
-
-  &::before,
-  &::after {
-    content: "";
-    flex: 1;
-    height: 1px;
-    background: rgba(139, 92, 246, 0.3);
-  }
-
-  span {
-    color: #a78bfa;
-    font-size: 13px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-  }
-`;
-
-const SimulationGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
-  gap: 32px;
-  margin-top: 40px;
-`;
-
-const ThreatCard = styled.div`
-  background: ${(props) => props.gradient || "rgba(30, 20, 50, 0.6)"};
-  border: 2px solid ${(props) => props.borderColor || "rgba(139, 92, 246, 0.2)"};
-  border-radius: 20px;
-  padding: 28px;
-  transition: all 0.3s ease;
-  backdrop-filter: blur(10px);
-
-  &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 16px 32px
-      ${(props) => props.shadowColor || "rgba(139, 92, 246, 0.3)"};
-    border-color: ${(props) =>
-      props.hoverBorderColor || "rgba(139, 92, 246, 0.4)"};
-  }
-`;
-
-const ThreatIcon = styled.div`
-  font-size: 48px;
-  margin-bottom: 16px;
-`;
-
-const ThreatTitle = styled.h2`
-  font-size: 22px;
-  font-weight: 700;
-  color: ${(props) => props.color || "#e2e8f0"};
-  margin-bottom: 12px;
-`;
-
-const ThreatDescription = styled.p`
-  font-size: 14px;
-  color: #c4b5fd;
-  line-height: 1.5;
-  margin-bottom: 24px;
-`;
-
-const ButtonGroup = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-`;
-
-const ThreatButton = styled.button`
-  padding: 12px 20px;
-  background: ${(props) => props.bg || "rgba(255, 255, 255, 0.1)"};
-  border: 2px solid
-    ${(props) => props.borderColor || "rgba(255, 255, 255, 0.2)"};
-  border-radius: 10px;
-  color: #e2e8f0;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  text-align: left;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-
-  .label {
-    flex: 1;
-  }
-
-  .emoji {
-    font-size: 16px;
-  }
-
-  &:hover:not(:disabled) {
-    background: ${(props) => props.hoverBg || "rgba(255, 255, 255, 0.2)"};
-    transform: translateX(4px);
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-`;
-
 const ConnectionStatus = styled.div`
   position: fixed;
   top: 20px;
@@ -327,8 +220,6 @@ const EmployeeLogin = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [connected, setConnected] = useState(false);
-  const [employeeToken, setEmployeeToken] = useState("EMP999");
-  const [simulationLoading, setSimulationLoading] = useState({});
 
   useEffect(() => {
     // Connect to Socket.IO
@@ -397,33 +288,31 @@ const EmployeeLogin = () => {
         localStorage.setItem("employeeName", response.employee.emp_name);
         localStorage.setItem("loginTime", new Date().toISOString());
 
-        toast.success(
-          `Welcome, ${response.employee.emp_name}! (Risk: ${response.riskLevel})`
-        );
-        navigate("/simulation");
+        toast.success(`Welcome back, ${response.employee.emp_name}!`);
+        navigate("/files");
       }
     } catch (err) {
       const errorMsg =
         err.response?.data?.message || "Login failed. Please try again.";
       const failedAttempts = err.response?.data?.failedAttempts;
-      const riskLevel = err.response?.data?.riskLevel;
 
       if (failedAttempts) {
-        setError(
-          `${errorMsg} (Attempt ${failedAttempts} - Risk: ${riskLevel})`
-        );
+        setError(`${errorMsg}. Please try again.`);
 
         if (failedAttempts >= 5) {
           toast.error(
-            "🚨 HIGH RISK: Multiple failed login attempts detected!",
+            "Too many failed attempts. Please contact IT support if you need help.",
             {
               autoClose: 5000,
             }
           );
         } else if (failedAttempts >= 3) {
-          toast.warning("⚠️ MEDIUM RISK: Multiple failed attempts detected", {
-            autoClose: 4000,
-          });
+          toast.warning(
+            "Multiple incorrect password attempts. Please check your credentials.",
+            {
+              autoClose: 4000,
+            }
+          );
         }
       } else {
         setError(errorMsg);
@@ -440,40 +329,6 @@ const EmployeeLogin = () => {
         autoClose: 5000,
       }
     );
-  };
-
-  const simulateThreat = async (threatType, subType) => {
-    const key = `${threatType}_${subType}`;
-    setSimulationLoading((prev) => ({ ...prev, [key]: true }));
-
-    try {
-      let response;
-      const data = { employee_token: employeeToken, threat_type: subType };
-
-      switch (threatType) {
-        case "login":
-          response = await simulationAPI.simulateLoginThreat(data);
-          break;
-        case "bulk":
-          response = await simulationAPI.simulateBulkDownloadThreat(data);
-          break;
-        case "geo":
-          response = await simulationAPI.simulateGeographicThreat(data);
-          break;
-        default:
-          throw new Error("Invalid threat type");
-      }
-
-      if (response.success) {
-        toast.success(`🎯 ${response.message}`);
-      }
-    } catch (error) {
-      toast.error(
-        `❌ ${error.response?.data?.message || "Failed to simulate threat"}`
-      );
-    } finally {
-      setSimulationLoading((prev) => ({ ...prev, [key]: false }));
-    }
   };
 
   return (
@@ -537,208 +392,6 @@ const EmployeeLogin = () => {
             </ForgotPasswordLink>
           </LoginCard>
         </LoginSection>
-
-        <Divider>
-          <span>Threat Simulation</span>
-        </Divider>
-
-        <LoginSection>
-          <InputGroup>
-            <Label htmlFor="employeeToken">Simulation Employee Token</Label>
-            <Input
-              type="text"
-              id="employeeToken"
-              name="employeeToken"
-              placeholder="Enter Employee Token for Simulation (e.g., EMP999)"
-              value={employeeToken}
-              onChange={(e) => setEmployeeToken(e.target.value.toUpperCase())}
-            />
-          </InputGroup>
-        </LoginSection>
-
-        <SimulationGrid>
-          {/* Login Anomaly Detection */}
-          <ThreatCard
-            gradient="rgba(20, 184, 166, 0.1)"
-            borderColor="rgba(20, 184, 166, 0.3)"
-            shadowColor="rgba(20, 184, 166, 0.4)"
-          >
-            <ThreatIcon>🔐</ThreatIcon>
-            <ThreatTitle color="#14b8a6">Login Anomaly Detection</ThreatTitle>
-            <ThreatDescription>
-              Simulate suspicious login activities including failed attempts,
-              odd-hour access, and rapid login attempts.
-            </ThreatDescription>
-            <ButtonGroup>
-              <ThreatButton
-                bg="rgba(20, 184, 166, 0.15)"
-                borderColor="rgba(20, 184, 166, 0.4)"
-                hoverBg="rgba(20, 184, 166, 0.25)"
-                onClick={() => simulateThreat("login", "failed_attempts")}
-                disabled={simulationLoading.login_failed_attempts}
-              >
-                <span className="label">
-                  {simulationLoading.login_failed_attempts
-                    ? "Simulating..."
-                    : "Failed Login Attempts"}
-                </span>
-                <span className="emoji">❌</span>
-              </ThreatButton>
-
-              <ThreatButton
-                bg="rgba(20, 184, 166, 0.15)"
-                borderColor="rgba(20, 184, 166, 0.4)"
-                hoverBg="rgba(20, 184, 166, 0.25)"
-                onClick={() => simulateThreat("login", "odd_hours")}
-                disabled={simulationLoading.login_odd_hours}
-              >
-                <span className="label">
-                  {simulationLoading.login_odd_hours
-                    ? "Simulating..."
-                    : "Odd-Hour Login (2:30 AM)"}
-                </span>
-                <span className="emoji">🌙</span>
-              </ThreatButton>
-
-              <ThreatButton
-                bg="rgba(20, 184, 166, 0.15)"
-                borderColor="rgba(20, 184, 166, 0.4)"
-                hoverBg="rgba(20, 184, 166, 0.25)"
-                onClick={() => simulateThreat("login", "rapid_succession")}
-                disabled={simulationLoading.login_rapid_succession}
-              >
-                <span className="label">
-                  {simulationLoading.login_rapid_succession
-                    ? "Simulating..."
-                    : "Rapid Login Attempts"}
-                </span>
-                <span className="emoji">⚡</span>
-              </ThreatButton>
-            </ButtonGroup>
-          </ThreatCard>
-
-          {/* Bulk Download Detection */}
-          <ThreatCard
-            gradient="rgba(99, 102, 241, 0.1)"
-            borderColor="rgba(99, 102, 241, 0.3)"
-            shadowColor="rgba(99, 102, 241, 0.4)"
-          >
-            <ThreatIcon>📦</ThreatIcon>
-            <ThreatTitle color="#6366f1">Bulk Download Detection</ThreatTitle>
-            <ThreatDescription>
-              Simulate large-scale file downloads that may indicate data
-              exfiltration attempts.
-            </ThreatDescription>
-            <ButtonGroup>
-              <ThreatButton
-                bg="rgba(99, 102, 241, 0.15)"
-                borderColor="rgba(99, 102, 241, 0.4)"
-                hoverBg="rgba(99, 102, 241, 0.25)"
-                onClick={() => simulateThreat("bulk", "large_files")}
-                disabled={simulationLoading.bulk_large_files}
-              >
-                <span className="label">
-                  {simulationLoading.bulk_large_files
-                    ? "Simulating..."
-                    : "Large Files (5 GB)"}
-                </span>
-                <span className="emoji">💾</span>
-              </ThreatButton>
-
-              <ThreatButton
-                bg="rgba(99, 102, 241, 0.15)"
-                borderColor="rgba(99, 102, 241, 0.4)"
-                hoverBg="rgba(99, 102, 241, 0.25)"
-                onClick={() => simulateThreat("bulk", "many_files")}
-                disabled={simulationLoading.bulk_many_files}
-              >
-                <span className="label">
-                  {simulationLoading.bulk_many_files
-                    ? "Simulating..."
-                    : "Many Files (500 files)"}
-                </span>
-                <span className="emoji">📁</span>
-              </ThreatButton>
-
-              <ThreatButton
-                bg="rgba(99, 102, 241, 0.15)"
-                borderColor="rgba(99, 102, 241, 0.4)"
-                hoverBg="rgba(99, 102, 241, 0.25)"
-                onClick={() => simulateThreat("bulk", "odd_hours")}
-                disabled={simulationLoading.bulk_odd_hours}
-              >
-                <span className="label">
-                  {simulationLoading.bulk_odd_hours
-                    ? "Simulating..."
-                    : "Odd-Hour Download (3:00 AM)"}
-                </span>
-                <span className="emoji">🌙</span>
-              </ThreatButton>
-            </ButtonGroup>
-          </ThreatCard>
-
-          {/* Geographic Anomaly Detection */}
-          <ThreatCard
-            gradient="rgba(236, 72, 153, 0.1)"
-            borderColor="rgba(236, 72, 153, 0.3)"
-            shadowColor="rgba(236, 72, 153, 0.4)"
-          >
-            <ThreatIcon>🌍</ThreatIcon>
-            <ThreatTitle color="#ec4899">
-              Geographic Anomaly Detection
-            </ThreatTitle>
-            <ThreatDescription>
-              Simulate impossible travel patterns, high-risk country access, and
-              unusual geographic locations.
-            </ThreatDescription>
-            <ButtonGroup>
-              <ThreatButton
-                bg="rgba(236, 72, 153, 0.15)"
-                borderColor="rgba(236, 72, 153, 0.4)"
-                hoverBg="rgba(236, 72, 153, 0.25)"
-                onClick={() => simulateThreat("geo", "impossible_travel")}
-                disabled={simulationLoading.geo_impossible_travel}
-              >
-                <span className="label">
-                  {simulationLoading.geo_impossible_travel
-                    ? "Simulating..."
-                    : "Impossible Travel (NY → Beijing)"}
-                </span>
-                <span className="emoji">✈️</span>
-              </ThreatButton>
-
-              <ThreatButton
-                bg="rgba(236, 72, 153, 0.15)"
-                borderColor="rgba(236, 72, 153, 0.4)"
-                hoverBg="rgba(236, 72, 153, 0.25)"
-                onClick={() => simulateThreat("geo", "high_risk_country")}
-                disabled={simulationLoading.geo_high_risk_country}
-              >
-                <span className="label">
-                  {simulationLoading.geo_high_risk_country
-                    ? "Simulating..."
-                    : "High-Risk Country Access"}
-                </span>
-                <span className="emoji">⚠️</span>
-              </ThreatButton>
-
-              <ThreatButton
-                bg="rgba(236, 72, 153, 0.15)"
-                borderColor="rgba(236, 72, 153, 0.4)"
-                hoverBg="rgba(236, 72, 153, 0.25)"
-                onClick={() => simulateThreat("geo", "new_location")}
-                disabled={simulationLoading.geo_new_location}
-              >
-                <span className="label">
-                  {simulationLoading.geo_new_location
-                    ? "Simulating..."
-                    : "New Location (Russia)"}
-                </span>
-                <span className="emoji">📍</span>
-              </ThreatButton>
-            </ButtonGroup>
-          </ThreatCard>
-        </SimulationGrid>
       </ContentWrapper>
     </PageContainer>
   );
