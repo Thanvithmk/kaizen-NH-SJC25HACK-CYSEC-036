@@ -242,29 +242,80 @@ router.post("/login", async (req, res) => {
       });
     }
 
-    // Successful login - calculate low risk
+    // Check if login is during off-hours
+    const loginHour = loginActivity.login_timestamp.getHours();
+    const loginMinute = loginActivity.login_timestamp.getMinutes();
+    const loginTimeInMinutes = loginHour * 60 + loginMinute;
+
+    // Parse employee's usual hours (format: "HH:MM")
+    const [usualLoginHour, usualLoginMinute] = (
+      employee.usual_login_time || "09:00"
+    )
+      .split(":")
+      .map(Number);
+    const [usualLogoutHour, usualLogoutMinute] = (
+      employee.usual_logout_time || "17:00"
+    )
+      .split(":")
+      .map(Number);
+
+    const usualStartTime = usualLoginHour * 60 + usualLoginMinute;
+    const usualEndTime = usualLogoutHour * 60 + usualLogoutMinute;
+
+    // Check if login is outside usual hours (with 1 hour buffer)
+    const bufferMinutes = 60; // 1 hour grace period
+    const isOffHours =
+      loginTimeInMinutes < usualStartTime - bufferMinutes ||
+      loginTimeInMinutes > usualEndTime + bufferMinutes;
+
+    let riskScore = 5;
+    let severityLevel = "Low";
+    let anomalies = ["Normal login activity"];
+
+    if (isOffHours) {
+      // Off-hours login detected - Medium risk
+      riskScore = 40;
+      severityLevel = "Medium";
+      anomalies = [
+        `Login outside usual hours: ${loginHour
+          .toString()
+          .padStart(2, "0")}:${loginMinute.toString().padStart(2, "0")}`,
+        `Expected hours: ${employee.usual_login_time} - ${employee.usual_logout_time}`,
+      ];
+      console.log(
+        `⚠️  Off-hours login detected for ${employee.emp_token} at ${loginHour}:${loginMinute}`
+      );
+    }
+
+    // Create threat (low risk for normal, medium for off-hours)
     const threat = await ActiveThreat.create({
       employee_token: employee.emp_token,
       alert_type: "login",
-      risk_score: 5,
+      risk_score: riskScore,
       original_alert_id: loginActivity._id,
       alert_date_time: new Date(),
       solved: "N",
       details: {
         ip_address: loginData.ip_address,
         location: loginData.location,
-        anomalies: ["Normal login activity"],
+        anomalies: anomalies,
         success_status: "Success",
-        severity_level: "Low",
+        severity_level: severityLevel,
+        login_time: `${loginHour.toString().padStart(2, "0")}:${loginMinute
+          .toString()
+          .padStart(2, "0")}`,
+        is_off_hours: isOffHours,
       },
     });
 
-    // Emit successful login (low risk, but logged)
+    // Emit alert (more prominent for off-hours)
     if (global.emitAlert) {
       global.emitAlert({
         type: "login",
         threat,
-        message: `Successful login: ${employee.emp_name}`,
+        message: isOffHours
+          ? `⚠️ Off-hours login: ${employee.emp_name} at ${loginHour}:${loginMinute}`
+          : `Successful login: ${employee.emp_name}`,
         employee_token: employee.emp_token,
       });
     }

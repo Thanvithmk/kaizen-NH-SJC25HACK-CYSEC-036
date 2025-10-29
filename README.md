@@ -31,7 +31,6 @@ Vigilant Guard now features **TWO separate frontends** for comprehensive demonst
 
 1. **Login/Logout Detection** - Monitors login patterns, failed attempts, and odd-hour access
 2. **Bulk Download Detection** - Tracks file downloads across monitored directories
-3. **Geographic Anomaly Detection** - Identifies impossible travel and suspicious location changes
 
 The system features a real-time dashboard with WebSocket updates, risk scoring (0-100), and comprehensive alert management.
 
@@ -44,11 +43,8 @@ The system features a real-time dashboard with WebSocket updates, risk scoring (
 - ✅ **Dual Login System** - Secondary security authentication layer
 - 🔍 **Real-time Monitoring** - Live threat detection and dashboard updates
 - 📊 **Risk Scoring** - Intelligent 0-100 point risk assessment
-- 🌍 **Geographic Tracking** - IP-based location analysis
-- 📦 **File Activity Monitoring** - Watches Downloads, Desktop, Documents folders
 - 🚨 **Alert Management** - Mark threats as solved/unsolved
 - 📈 **Analytics Dashboard** - Interactive charts and statistics
-- 🔔 **Real-time Notifications** - Instant alert notifications via WebSocket
 
 ### Privacy Features
 
@@ -67,8 +63,6 @@ The system features a real-time dashboard with WebSocket updates, risk scoring (
 
 - Node.js + Express.js
 - MongoDB with Mongoose
-- Socket.IO for real-time updates
-- Chokidar for file monitoring
 - JWT authentication
 
 **Frontend (Dual Architecture):**
@@ -85,9 +79,7 @@ The system features a real-time dashboard with WebSocket updates, risk scoring (
 
 1. **LoginActivity** - Login/logout records with risk levels
 2. **BulkDownloadAlert** - File download activity alerts
-3. **GeographicAlert** - Location-based anomalies
-4. **EmployeePattern** - Employee baseline patterns
-5. **ActiveThreat** - Consolidated threat dashboard
+3. **EmployeePattern** - Employee baseline patterns
 
 ---
 
@@ -660,14 +652,6 @@ For issues and questions:
 - Open an issue on GitHub
 - Check existing documentation
 - Review API documentation
-
----
-
-## 🎉 Acknowledgments
-
-- IP location data provided by ip-api.com
-- Built with the MERN stack
-- Inspired by real-world security monitoring needs
 
 ---
 
