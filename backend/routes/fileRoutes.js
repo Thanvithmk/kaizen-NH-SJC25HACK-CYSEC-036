@@ -191,9 +191,15 @@ router.get("/download/:filename", async (req, res) => {
         });
 
         // Emit real-time update
-        const io = req.app.get("io");
-        if (io) {
-          io.emit("new_threat", threat);
+        if (global.emitAlert) {
+          global.emitAlert({
+            type: "bulk",
+            threat,
+            message: `File download: ${sanitizedFilename} (${fileSizeMB.toFixed(
+              2
+            )}MB)`,
+            employee_token: employeeToken,
+          });
         }
       }
     }
@@ -300,9 +306,16 @@ router.post("/bulk-download", async (req, res) => {
         });
 
         // Emit real-time update
-        const io = req.app.get("io");
-        if (io) {
-          io.emit("new_threat", threat);
+        if (global.emitAlert) {
+          global.emitAlert({
+            type: "bulk",
+            threat,
+            message: `Bulk download: ${filenames.length} files (${(
+              totalSize /
+              (1024 * 1024)
+            ).toFixed(2)}MB)`,
+            employee_token: employee_token,
+          });
         }
       }
     }

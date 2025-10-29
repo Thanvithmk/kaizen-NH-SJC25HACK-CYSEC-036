@@ -99,10 +99,14 @@ router.post("/login-threat", async (req, res) => {
       employeePattern.alert_count += 1;
       await employeePattern.save();
 
-      // Emit real-time update via Socket.IO
-      const io = req.app.get("io");
-      if (io) {
-        io.emit("new_threat", threat);
+      // Emit real-time update
+      if (global.emitAlert) {
+        global.emitAlert({
+          type: "login",
+          threat,
+          message: `Simulated login threat: ${threat_type}`,
+          employee_token,
+        });
       }
 
       return res.status(201).json({
@@ -207,9 +211,14 @@ router.post("/bulk-download-threat", async (req, res) => {
       employeePattern.alert_count += 1;
       await employeePattern.save();
 
-      const io = req.app.get("io");
-      if (io) {
-        io.emit("new_threat", threat);
+      // Emit real-time update
+      if (global.emitAlert) {
+        global.emitAlert({
+          type: "bulk",
+          threat,
+          message: `Simulated bulk download threat`,
+          employee_token,
+        });
       }
 
       return res.status(201).json({
@@ -349,9 +358,14 @@ router.post("/geographic-threat", async (req, res) => {
       employeePattern.alert_count += 1;
       await employeePattern.save();
 
-      const io = req.app.get("io");
-      if (io) {
-        io.emit("new_threat", threat);
+      // Emit real-time update
+      if (global.emitAlert) {
+        global.emitAlert({
+          type: "geo",
+          threat,
+          message: `Simulated geographic threat: ${threat_type}`,
+          employee_token,
+        });
       }
 
       return res.status(201).json({

@@ -17,8 +17,12 @@ const testEmployees = [
   {
     emp_token: "EMP001",
     emp_name: "John Smith",
-    emp_id: "EMP001",
+    emp_id: "E001",
     password: "password123",
+    location_type: "Office",
+    ip_range: "192.168.1.0/24",
+    usual_login_time: "09:00",
+    usual_logout_time: "17:00",
     country: "United States",
     city: "New York",
     status: 1,
@@ -26,28 +30,40 @@ const testEmployees = [
   {
     emp_token: "EMP002",
     emp_name: "Sarah Johnson",
-    emp_id: "EMP002",
+    emp_id: "E002",
     password: "password123",
-    country: "United States",
-    city: "Los Angeles",
+    location_type: "Remote",
+    ip_range: "203.45.78.0/24",
+    usual_login_time: "08:30",
+    usual_logout_time: "16:30",
+    country: "United Kingdom",
+    city: "London",
     status: 1,
   },
   {
     emp_token: "EMP003",
     emp_name: "Michael Chen",
-    emp_id: "EMP003",
+    emp_id: "E003",
     password: "password123",
-    country: "United States",
-    city: "San Francisco",
+    location_type: "Office",
+    ip_range: "10.0.0.0/24",
+    usual_login_time: "10:00",
+    usual_logout_time: "18:00",
+    country: "Singapore",
+    city: "Singapore",
     status: 1,
   },
   {
-    emp_token: "EMP999",
-    emp_name: "Test User",
-    emp_id: "EMP999",
+    emp_token: "EMP004",
+    emp_name: "Emma Davis",
+    emp_id: "E004",
     password: "password123",
-    country: "United States",
-    city: "New York",
+    location_type: "Hybrid",
+    ip_range: "172.16.0.0/24",
+    usual_login_time: "09:30",
+    usual_logout_time: "17:30",
+    country: "Canada",
+    city: "Toronto",
     status: 1,
   },
 ];
@@ -75,8 +91,11 @@ const seedEmployees = async () => {
 
     console.log("\n✨ Employee seeding completed successfully!");
     console.log("\n📝 Test Credentials:");
-    console.log("   Employee ID: EMP001, EMP002, EMP003, or EMP999");
+    console.log("   Employee Token: EMP001, EMP002, EMP003, or EMP004");
     console.log("   Password: password123");
+    console.log(
+      "\n⚠️  Note: Use the Employee Token (EMP###), not the Employee ID (E###)"
+    );
     console.log("\n");
   } catch (error) {
     console.error("❌ Error seeding employees:", error);

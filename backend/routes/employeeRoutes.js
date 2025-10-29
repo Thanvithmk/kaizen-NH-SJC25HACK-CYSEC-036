@@ -26,25 +26,7 @@ router.post("/login", async (req, res) => {
       emp_token: employeeId.toUpperCase(),
     });
 
-    if (!employee) {
-      return res.status(404).json({
-        success: false,
-        message: "Invalid employee ID or password",
-      });
-    }
-
-    // Check if employee is active
-    if (employee.status !== 1) {
-      return res.status(403).json({
-        success: false,
-        message: "Employee account is inactive",
-      });
-    }
-
-    // Verify password
-    const isPasswordValid = await bcrypt.compare(password, employee.password);
-
-    // Mock location data based on employee (in production, use IP geolocation service)
+    // Mock location data (in production, use IP geolocation service)
     const mockLocations = [
       { city: "New York", country: "United States", location: "New York, US" },
       { city: "London", country: "United Kingdom", location: "London, UK" },
@@ -55,6 +37,81 @@ router.post("/login", async (req, res) => {
     ];
     const randomLocation =
       mockLocations[Math.floor(Math.random() * mockLocations.length)];
+
+    if (!employee) {
+      // Create failed login record even if employee doesn't exist
+      // Ensure employee token is in valid format, or use placeholder
+      let normalizedToken = employeeId.toUpperCase();
+
+      // If format is invalid, create a sanitized version
+      if (!normalizedToken.match(/^EMP\d{3,}$/)) {
+        console.log(`Invalid employee token format: ${employeeId}`);
+        // Try to extract numbers and create valid format
+        const numbers = employeeId.replace(/\D/g, "");
+        if (numbers) {
+          normalizedToken = `EMP${numbers.padStart(3, "0")}`;
+        } else {
+          normalizedToken = "EMP999"; // Placeholder for invalid formats
+        }
+      }
+
+      const loginData = {
+        employee_token: normalizedToken,
+        ip_address: ip_address || req.ip || "127.0.0.1",
+        login_timestamp: new Date(),
+        city: randomLocation.city,
+        country: randomLocation.country,
+        location: randomLocation.location,
+        success_status: "Failed",
+      };
+
+      try {
+        await LoginActivity.create(loginData);
+        console.log(`Failed login recorded for ${normalizedToken}`);
+      } catch (error) {
+        console.error("Error creating failed login record:", error.message);
+      }
+
+      return res.status(404).json({
+        success: false,
+        message: "Invalid employee ID or password",
+        failedAttempts: 1,
+        riskLevel: "Low",
+      });
+    }
+
+    // Check if employee is active
+    if (employee.status !== 1) {
+      // Create failed login record for inactive employee
+      const loginData = {
+        employee_token: employee.emp_token,
+        ip_address: ip_address || req.ip || "127.0.0.1",
+        login_timestamp: new Date(),
+        city: randomLocation.city,
+        country: randomLocation.country,
+        location: randomLocation.location,
+        success_status: "Failed",
+      };
+
+      try {
+        await LoginActivity.create(loginData);
+        console.log(
+          `Failed login recorded for inactive employee ${employee.emp_token}`
+        );
+      } catch (error) {
+        console.error("Error creating failed login record:", error.message);
+      }
+
+      return res.status(403).json({
+        success: false,
+        message: "Employee account is inactive",
+        failedAttempts: 1,
+        riskLevel: "Low",
+      });
+    }
+
+    // Verify password
+    const isPasswordValid = await bcrypt.compare(password, employee.password);
 
     const loginData = {
       employee_token: employee.emp_token,
@@ -68,7 +125,20 @@ router.post("/login", async (req, res) => {
     };
 
     // Create login activity record
-    const loginActivity = await LoginActivity.create(loginData);
+    let loginActivity;
+    try {
+      loginActivity = await LoginActivity.create(loginData);
+      console.log(
+        `Login activity created: ${loginData.success_status} for ${employee.emp_token}`
+      );
+    } catch (error) {
+      console.error("Error creating login activity:", error.message);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to record login activity",
+        error: error.message,
+      });
+    }
 
     if (!isPasswordValid) {
       // Count recent failed attempts (last 30 minutes)
@@ -80,6 +150,7 @@ router.post("/login", async (req, res) => {
       });
 
       // Calculate risk level based on failed attempts
+      // Dashboard categorizes: High >= 50, Medium 25-49, Low < 25
       let riskScore = 0;
       let severityLevel = "Low";
       const anomalies = [];
@@ -91,40 +162,75 @@ router.post("/login", async (req, res) => {
           `High: ${recentFailedAttempts} failed login attempts in 30 minutes`
         );
       } else if (recentFailedAttempts >= 3) {
-        riskScore = 50;
+        riskScore = 45; // Medium (was 50, which is High threshold)
         severityLevel = "Medium";
         anomalies.push(
           `Warning: ${recentFailedAttempts} failed login attempts in 30 minutes`
         );
       } else if (recentFailedAttempts >= 2) {
-        riskScore = 30;
+        riskScore = 30; // Low/Medium boundary
         severityLevel = "Low";
         anomalies.push(`${recentFailedAttempts} failed login attempts`);
       }
 
-      // Create threat alert if risk is significant
-      if (riskScore >= 30) {
-        const threat = await ActiveThreat.create({
+      // Create or update threat alert if risk is significant (>= 25 is Medium threshold)
+      if (riskScore >= 25) {
+        // Check if there's already an active threat for this employee's failed logins
+        // within the last 30 minutes
+        const existingThreat = await ActiveThreat.findOne({
           employee_token: employee.emp_token,
           alert_type: "login",
-          risk_score: riskScore,
-          original_alert_id: loginActivity._id,
-          alert_date_time: new Date(),
           solved: "N",
-          details: {
-            ip_address: loginData.ip_address,
-            location: loginData.location,
-            anomalies: anomalies,
-            failed_attempts: recentFailedAttempts,
-            success_status: "Failed",
-            severity_level: severityLevel,
-          },
+          "details.success_status": "Failed",
+          alert_date_time: { $gte: thirtyMinutesAgo },
         });
 
-        // Emit real-time update via Socket.IO
-        const io = req.app.get("io");
-        if (io) {
-          io.emit("new_threat", threat);
+        let threat;
+        if (existingThreat) {
+          // Update existing threat with new risk score and attempt count
+          existingThreat.risk_score = riskScore;
+          existingThreat.alert_date_time = new Date();
+          existingThreat.details.failed_attempts = recentFailedAttempts;
+          existingThreat.details.severity_level = severityLevel;
+          existingThreat.details.anomalies = anomalies;
+          existingThreat.details.ip_address = loginData.ip_address;
+          existingThreat.details.location = loginData.location;
+
+          threat = await existingThreat.save();
+          console.log(
+            `Updated existing threat for ${employee.emp_token}: ${recentFailedAttempts} attempts, score ${riskScore}`
+          );
+        } else {
+          // Create new threat
+          threat = await ActiveThreat.create({
+            employee_token: employee.emp_token,
+            alert_type: "login",
+            risk_score: riskScore,
+            original_alert_id: loginActivity._id,
+            alert_date_time: new Date(),
+            solved: "N",
+            details: {
+              ip_address: loginData.ip_address,
+              location: loginData.location,
+              anomalies: anomalies,
+              failed_attempts: recentFailedAttempts,
+              success_status: "Failed",
+              severity_level: severityLevel,
+            },
+          });
+          console.log(
+            `Created new threat for ${employee.emp_token}: ${recentFailedAttempts} attempts, score ${riskScore}`
+          );
+        }
+
+        // Emit real-time update
+        if (global.emitAlert) {
+          global.emitAlert({
+            type: "login",
+            threat,
+            message: `Failed login attempts: ${recentFailedAttempts}`,
+            employee_token: employee.emp_token,
+          });
         }
       }
 
@@ -153,10 +259,14 @@ router.post("/login", async (req, res) => {
       },
     });
 
-    // Emit successful login
-    const io = req.app.get("io");
-    if (io) {
-      io.emit("new_threat", threat);
+    // Emit successful login (low risk, but logged)
+    if (global.emitAlert) {
+      global.emitAlert({
+        type: "login",
+        threat,
+        message: `Successful login: ${employee.emp_name}`,
+        employee_token: employee.emp_token,
+      });
     }
 
     res.json({

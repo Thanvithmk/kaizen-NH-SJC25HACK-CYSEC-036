@@ -188,7 +188,7 @@ class FolderMonitoringService {
         });
 
         // Create active threat
-        await ActiveThreat.create({
+        const threat = await ActiveThreat.create({
           alert_date_time: new Date(),
           risk_score: riskData.riskScore,
           alert_type: "bulk",
@@ -206,6 +206,16 @@ class FolderMonitoringService {
         console.log(
           `🚨 Bulk download alert created for ${employeeToken}: ${recentFiles.length} files, ${totalSizeMB}MB`
         );
+
+        // Emit real-time update to dashboard
+        if (global.emitAlert) {
+          global.emitAlert({
+            type: "bulk",
+            threat,
+            message: `Bulk download detected: ${recentFiles.length} files (${totalSizeMB}MB)`,
+            employee_token: employeeToken,
+          });
+        }
 
         // Clear processed files
         activity.files = [];
@@ -252,4 +262,3 @@ class FolderMonitoringService {
 }
 
 module.exports = new FolderMonitoringService();
-
