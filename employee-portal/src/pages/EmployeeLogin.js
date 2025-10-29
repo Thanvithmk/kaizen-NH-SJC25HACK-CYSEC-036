@@ -161,6 +161,44 @@ const ForgotPasswordLink = styled.div`
   }
 `;
 
+const SignUpSection = styled.div`
+  text-align: center;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(139, 92, 246, 0.2);
+`;
+
+const SignUpText = styled.p`
+  font-size: 13px;
+  color: #c4b5fd;
+  margin-bottom: 12px;
+`;
+
+const SignUpButton = styled.button`
+  padding: 12px 24px;
+  background: transparent;
+  border: 2px solid rgba(139, 92, 246, 0.4);
+  border-radius: 10px;
+  color: #a78bfa;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+
+  &:hover {
+    background: rgba(139, 92, 246, 0.1);
+    border-color: #8b5cf6;
+    color: #c4b5fd;
+    transform: translateY(-2px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+`;
+
 const ErrorMessage = styled.div`
   padding: 12px 16px;
   background: rgba(239, 68, 68, 0.2);
@@ -386,6 +424,13 @@ const EmployeeLogin = () => {
                 Forgot Password?
               </button>
             </ForgotPasswordLink>
+
+            <SignUpSection>
+              <SignUpText>Don't have an account?</SignUpText>
+              <SignUpButton type="button" onClick={() => navigate("/register")}>
+                Create Account
+              </SignUpButton>
+            </SignUpSection>
           </LoginCard>
         </LoginSection>
       </ContentWrapper>

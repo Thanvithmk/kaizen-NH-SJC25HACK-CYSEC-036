@@ -147,7 +147,137 @@ class LocationService {
 
     return employeePattern.country === country && employeePattern.city === city;
   }
+
+  /**
+   * Check if IP address is in a given IP range (CIDR notation)
+   * @param {String} ip - IP address to check
+   * @param {String} range - IP range in CIDR notation (e.g., "192.168.1.0/24")
+   * @returns {Boolean}
+   */
+  isIPInRange(ip, range) {
+    try {
+      // Handle direct IP match
+      if (ip === range) return true;
+
+      // Parse CIDR notation
+      if (!range.includes("/")) {
+        // If no CIDR, check exact match
+        return ip === range;
+      }
+
+      const [rangeIP, bits] = range.split("/");
+      const mask = ~(2 ** (32 - parseInt(bits)) - 1);
+
+      const ipNum = this.ipToNumber(ip);
+      const rangeNum = this.ipToNumber(rangeIP);
+
+      return (ipNum & mask) === (rangeNum & mask);
+    } catch (error) {
+      console.error("Error checking IP range:", error.message);
+      return false;
+    }
+  }
+
+  /**
+   * Convert IP address to number
+   * @param {String} ip - IP address
+   * @returns {Number}
+   */
+  ipToNumber(ip) {
+    return (
+      ip.split(".").reduce((acc, octet) => (acc << 8) + parseInt(octet), 0) >>>
+      0
+    );
+  }
+
+  /**
+   * Verify if login location is allowed for employee
+   * @param {String} ip - Login IP address
+   * @param {String} country - Resolved country
+   * @param {String} city - Resolved city
+   * @param {Object} employee - Employee pattern with verified_locations
+   * @returns {Object} - Verification result
+   */
+  verifyLoginLocation(ip, country, city, employee) {
+    // Check if location verification is enabled
+    if (!employee.location_verification_enabled) {
+      return {
+        allowed: true,
+        risk_level: "Low",
+        reason: "Location verification disabled",
+        matched_location: null,
+      };
+    }
+
+    // Check 1: IP Range Match (Highest priority)
+    if (employee.verified_locations && employee.verified_locations.length > 0) {
+      for (const location of employee.verified_locations) {
+        if (!location.verified) continue;
+
+        // Check if IP matches any IP range in this location
+        if (location.ip_ranges && location.ip_ranges.length > 0) {
+          for (const range of location.ip_ranges) {
+            if (this.isIPInRange(ip, range)) {
+              return {
+                allowed: true,
+                risk_level: "Low",
+                reason: `IP matched verified ${location.location_type} location`,
+                matched_location: location,
+              };
+            }
+          }
+        }
+
+        // Check 2: Country + City Match
+        if (
+          location.country.toLowerCase() === country.toLowerCase() &&
+          location.city.toLowerCase() === city.toLowerCase()
+        ) {
+          return {
+            allowed: true,
+            risk_level: "Low",
+            reason: `Location matched verified ${location.location_type}`,
+            matched_location: location,
+          };
+        }
+      }
+    }
+
+    // Check 3: Allowed Countries List
+    if (employee.allowed_countries && employee.allowed_countries.length > 0) {
+      const countryAllowed = employee.allowed_countries.some(
+        (allowedCountry) =>
+          allowedCountry.toLowerCase() === country.toLowerCase()
+      );
+
+      if (countryAllowed) {
+        return {
+          allowed: true,
+          risk_level: "Medium",
+          reason: `Country ${country} is in allowed list, but city ${city} is new`,
+          matched_location: null,
+        };
+      }
+    }
+
+    // Check 4: Strict Mode
+    if (employee.strict_mode) {
+      return {
+        allowed: false,
+        risk_level: "Critical",
+        reason: `Strict mode enabled: Unverified location ${city}, ${country}`,
+        matched_location: null,
+      };
+    }
+
+    // Default: Allow but flag as high risk
+    return {
+      allowed: true,
+      risk_level: "High",
+      reason: `Unknown location ${city}, ${country}`,
+      matched_location: null,
+    };
+  }
 }
 
 module.exports = new LocationService();
-

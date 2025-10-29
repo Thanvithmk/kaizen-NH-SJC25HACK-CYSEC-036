@@ -47,6 +47,46 @@ const EmployeePatternSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    // Enhanced geolocation verification fields
+    verified_locations: [
+      {
+        location_type: {
+          type: String,
+          enum: ["Office", "Home", "Remote"],
+          default: "Office",
+        },
+        country: {
+          type: String,
+          required: true,
+        },
+        city: {
+          type: String,
+          required: true,
+        },
+        ip_ranges: [String], // Array of IP ranges (e.g., "192.168.1.0/24")
+        is_primary: {
+          type: Boolean,
+          default: false,
+        },
+        verified: {
+          type: Boolean,
+          default: true,
+        },
+        added_date: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
+    allowed_countries: [String], // List of approved countries for login
+    location_verification_enabled: {
+      type: Boolean,
+      default: true,
+    },
+    strict_mode: {
+      type: Boolean,
+      default: false, // If true, only verified IP ranges allowed
+    },
     status: {
       type: Number,
       enum: [0, 1],

@@ -40,22 +40,67 @@ class AuthService {
    */
   async registerEmployee(employeeData) {
     try {
+      // Validate required fields
+      if (!employeeData.password) {
+        throw new Error("Password is required");
+      }
+      if (employeeData.password.length < 6) {
+        throw new Error("Password must be at least 6 characters");
+      }
+
+      // Generate unique employee token
       const token = await this.generateEmployeeToken();
 
+      // Hash password
+      const hashedPassword = await bcrypt.hash(employeeData.password, 10);
+
+      // Prepare verified locations if geolocation is enabled
+      const verified_locations = [];
+      const allowed_countries = [];
+
+      if (employeeData.location_verification_enabled && employeeData.country) {
+        // Add primary location
+        const ipRanges = employeeData.ip_range ? [employeeData.ip_range] : [];
+
+        verified_locations.push({
+          location_type: employeeData.location_type || "Office",
+          country: employeeData.country,
+          city: employeeData.city || "",
+          ip_ranges: ipRanges,
+          is_primary: true,
+          verified: true,
+          added_date: new Date(),
+        });
+
+        // Add country to allowed list
+        allowed_countries.push(employeeData.country);
+      }
+
+      // Create employee record
       const employee = await EmployeePattern.create({
         emp_name: employeeData.emp_name || "",
         emp_id: employeeData.emp_id || "",
         emp_token: token,
+        password: hashedPassword,
         location_type: employeeData.location_type || "Office",
         ip_range: employeeData.ip_range || "",
         usual_login_time: employeeData.usual_login_time || "09:00",
         usual_logout_time: employeeData.usual_logout_time || "17:00",
         country: employeeData.country || "",
         city: employeeData.city || "",
+        verified_locations,
+        allowed_countries,
+        location_verification_enabled:
+          employeeData.location_verification_enabled || false,
+        strict_mode: employeeData.strict_mode || false,
         status: 1,
       });
 
-      return employee;
+      // Remove password from response
+      const employeeResponse = employee.toObject();
+      delete employeeResponse.password;
+
+      return employeeResponse;
     } catch (error) {
       throw new Error(`Failed to register employee: ${error.message}`);
     }
@@ -82,6 +127,68 @@ class AuthService {
         throw new Error("Invalid employee token");
       }
 
+      // Verify password if provided
+      if (password) {
+        const isPasswordValid = await bcrypt.compare(
+          password,
+          employee.password
+        );
+        if (!isPasswordValid) {
+          // Record failed attempt
+          await this.recordFailedLogin(employee_token, ip_address);
+          throw new Error("Invalid password");
+        }
+      }
+
+      // GEOLOCATION VERIFICATION: Get location from IP
+      const currentLocation = await locationService.getLocationFromIP(
+        ip_address || "Unknown"
+      );
+
+      // GEOLOCATION VERIFICATION: Check if location is allowed
+      const locationVerification = locationService.verifyLoginLocation(
+        ip_address,
+        currentLocation.country,
+        currentLocation.city,
+        employee
+      );
+
+      // BLOCK login if location not allowed (strict mode)
+      if (!locationVerification.allowed) {
+        // Record failed login with location details
+        await LoginActivity.create({
+          employee_token,
+          login_timestamp: new Date(),
+          ip_address,
+          city: currentLocation.city,
+          country: currentLocation.country,
+          location: `${currentLocation.city}, ${currentLocation.country}`,
+          success_status: "Failed",
+          failed_attempts_count: 0,
+          risk_level: locationVerification.risk_level,
+        });
+
+        // Create high-risk alert for blocked login
+        await ActiveThreat.create({
+          alert_date_time: new Date(),
+          risk_score: 100,
+          alert_type: "geo",
+          employee_token,
+          solved: "N",
+          risk_level: "Critical",
+          details: {
+            blocked: true,
+            reason: locationVerification.reason,
+            ip_address,
+            location: `${currentLocation.city}, ${currentLocation.country}`,
+          },
+        });
+
+        throw new Error(
+          `Login blocked: ${locationVerification.reason}. Please contact your administrator.`
+        );
+      }
+
       // Get previous login for geographic analysis
       const previousLogin = await LoginActivity.findOne({
         employee_token,
@@ -89,17 +196,50 @@ class AuthService {
         logout_timestamp: { $ne: null },
       }).sort({ login_timestamp: -1 });
 
-      // Create login activity record
+      // Create login activity record with location data
       const loginActivity = await LoginActivity.create({
         employee_token,
         login_timestamp: new Date(),
         ip_address,
+        city: currentLocation.city,
+        country: currentLocation.country,
+        location: `${currentLocation.city}, ${currentLocation.country}`,
         success_status: "Success",
         failed_attempts_count: 0,
-        risk_level: "Low",
+        risk_level: locationVerification.risk_level || "Low",
       });
 
-      // Analyze geographic anomaly
+      // Create alert for Medium/High risk logins (allowed but suspicious)
+      if (
+        locationVerification.risk_level === "Medium" ||
+        locationVerification.risk_level === "High"
+      ) {
+        const riskScore = locationVerification.risk_level === "High" ? 75 : 50;
+
+        await ActiveThreat.create({
+          alert_date_time: new Date(),
+          risk_score: riskScore,
+          alert_type: "geo",
+          employee_token,
+          solved: "N",
+          risk_level: locationVerification.risk_level,
+          original_alert_id: loginActivity._id,
+          details: {
+            reason: locationVerification.reason,
+            ip_address,
+            location: `${currentLocation.city}, ${currentLocation.country}`,
+            matched_location:
+              locationVerification.matched_location?.location_type || null,
+            alert_message: `Login from ${locationVerification.risk_level} risk location`,
+          },
+        });
+
+        console.log(
+          `⚠️ ${locationVerification.risk_level} risk login alert for ${employee_token}: ${locationVerification.reason}`
+        );
+      }
+
+      // Analyze geographic anomaly (impossible travel)
       if (previousLogin) {
         const anomaly = await locationService.analyzeGeographicAnomaly(
           { ip_address, login_timestamp: loginActivity.login_timestamp },
@@ -355,4 +495,3 @@ class AuthService {
 }
 
 module.exports = new AuthService();
-

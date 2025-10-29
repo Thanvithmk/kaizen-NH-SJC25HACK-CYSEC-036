@@ -8,6 +8,7 @@ import {
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import EmployeeLogin from "./pages/EmployeeLogin";
+import EmployeeRegistration from "./pages/EmployeeRegistration";
 import FileDownloads from "./pages/FileDownloads";
 
 function App() {
@@ -16,6 +17,7 @@ function App() {
       <Routes>
         <Route path="/" element={<EmployeeLogin />} />
         <Route path="/login" element={<EmployeeLogin />} />
+        <Route path="/register" element={<EmployeeRegistration />} />
         <Route path="/files" element={<FileDownloads />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

@@ -1,0 +1,330 @@
+[
+  {
+    "_id": { "$oid": "507f1f77bcf86cd799439011" },
+    "emp_name": "John Smith",
+    "emp_id": "E001",
+    "emp_token": "EMP001",
+    "password": "$2a$10$ZQX8N0hN5Oy7D8M5v5y7puEqZ1qZ8xF8qZ8xF8qZ8xF8qZ8xF8qZ8",
+    "location_type": "Office",
+    "ip_range": "192.168.1.0/24",
+    "usual_login_time": "09:00",
+    "usual_logout_time": "17:00",
+    "country": "United States",
+    "city": "New York",
+    "verified_locations": [
+      {
+        "location_type": "Office",
+        "country": "United States",
+        "city": "New York",
+        "ip_ranges": ["192.168.1.0/24"],
+        "is_primary": true,
+        "verified": true,
+        "added_date": { "$date": "2024-01-15T10:30:00.000Z" }
+      },
+      {
+        "location_type": "Home",
+        "country": "United States",
+        "city": "Brooklyn",
+        "ip_ranges": ["192.168.2.0/24"],
+        "is_primary": false,
+        "verified": true,
+        "added_date": { "$date": "2024-01-15T10:30:00.000Z" }
+      }
+    ],
+    "allowed_countries": ["United States"],
+    "location_verification_enabled": true,
+    "strict_mode": false,
+    "status": 1,
+    "createdAt": { "$date": "2024-01-15T10:30:00.000Z" },
+    "updatedAt": { "$date": "2024-01-15T10:30:00.000Z" }
+  },
+  {
+    "_id": { "$oid": "507f1f77bcf86cd799439012" },
+    "emp_name": "Sarah Johnson",
+    "emp_id": "E002",
+    "emp_token": "EMP002",
+    "password": "$2a$10$YQW7M0gM4Nx6C7L4u4x6otDpY0pY7wE7pY7wE7pY7wE7pY7wE7pY7",
+    "location_type": "Home",
+    "ip_range": "10.0.0.0/24",
+    "usual_login_time": "08:30",
+    "usual_logout_time": "16:30",
+    "country": "United States",
+    "city": "San Francisco",
+    "verified_locations": [
+      {
+        "location_type": "Home",
+        "country": "United States",
+        "city": "San Francisco",
+        "ip_ranges": ["10.0.0.0/24"],
+        "is_primary": true,
+        "verified": true,
+        "added_date": { "$date": "2024-01-16T09:00:00.000Z" }
+      }
+    ],
+    "allowed_countries": ["United States", "Canada"],
+    "location_verification_enabled": true,
+    "strict_mode": false,
+    "status": 1,
+    "createdAt": { "$date": "2024-01-16T09:00:00.000Z" },
+    "updatedAt": { "$date": "2024-01-16T09:00:00.000Z" }
+  },
+  {
+    "_id": { "$oid": "507f1f77bcf86cd799439013" },
+    "emp_name": "Mike Chen",
+    "emp_id": "E003",
+    "emp_token": "EMP003",
+    "password": "$2a$10$XPV6L0fL3Mw5B6K3t3w5nsCoX0oX6vD6oX6vD6oX6vD6oX6vD6oX6",
+    "location_type": "Hybrid",
+    "ip_range": "172.16.0.0/24",
+    "usual_login_time": "09:00",
+    "usual_logout_time": "18:00",
+    "country": "Canada",
+    "city": "Toronto",
+    "verified_locations": [
+      {
+        "location_type": "Office",
+        "country": "Canada",
+        "city": "Toronto",
+        "ip_ranges": ["172.16.0.0/24"],
+        "is_primary": true,
+        "verified": true,
+        "added_date": { "$date": "2024-01-17T11:00:00.000Z" }
+      },
+      {
+        "location_type": "Home",
+        "country": "Canada",
+        "city": "Toronto",
+        "ip_ranges": ["192.168.10.0/24"],
+        "is_primary": false,
+        "verified": true,
+        "added_date": { "$date": "2024-01-17T11:00:00.000Z" }
+      }
+    ],
+    "allowed_countries": ["Canada", "United States"],
+    "location_verification_enabled": true,
+    "strict_mode": false,
+    "status": 1,
+    "createdAt": { "$date": "2024-01-17T11:00:00.000Z" },
+    "updatedAt": { "$date": "2024-01-17T11:00:00.000Z" }
+  },
+  {
+    "_id": { "$oid": "507f1f77bcf86cd799439014" },
+    "emp_name": "Lisa Park",
+    "emp_id": "E004",
+    "emp_token": "EMP004",
+    "password": "$2a$10$WOU5K0eK2Lv4A5J2s2v4mrBnW0nW5uC5nW5uC5nW5uC5nW5uC5nW5",
+    "location_type": "Office",
+    "ip_range": "192.168.50.0/24",
+    "usual_login_time": "08:00",
+    "usual_logout_time": "17:00",
+    "country": "United States",
+    "city": "Seattle",
+    "verified_locations": [
+      {
+        "location_type": "Office",
+        "country": "United States",
+        "city": "Seattle",
+        "ip_ranges": ["192.168.50.0/24"],
+        "is_primary": true,
+        "verified": true,
+        "added_date": { "$date": "2024-01-18T08:00:00.000Z" }
+      }
+    ],
+    "allowed_countries": ["United States"],
+    "location_verification_enabled": true,
+    "strict_mode": false,
+    "status": 1,
+    "createdAt": { "$date": "2024-01-18T08:00:00.000Z" },
+    "updatedAt": { "$date": "2024-01-18T08:00:00.000Z" }
+  },
+  {
+    "_id": { "$oid": "507f1f77bcf86cd799439015" },
+    "emp_name": "David Kim",
+    "emp_id": "E005",
+    "emp_token": "EMP005",
+    "password": "$2a$10$VNT4J0dJ1Ku3Z4I1r1u3lqAmV0mV4tB4mV4tB4mV4tB4mV4tB4mV4",
+    "location_type": "Office",
+    "ip_range": "172.20.0.0/24",
+    "usual_login_time": "09:00",
+    "usual_logout_time": "17:00",
+    "country": "United States",
+    "city": "Boston",
+    "verified_locations": [
+      {
+        "location_type": "Office",
+        "country": "United States",
+        "city": "Boston",
+        "ip_ranges": ["172.20.0.0/24"],
+        "is_primary": true,
+        "verified": true,
+        "added_date": { "$date": "2024-01-19T09:30:00.000Z" }
+      }
+    ],
+    "allowed_countries": ["United States"],
+    "location_verification_enabled": true,
+    "strict_mode": true,
+    "status": 1,
+    "createdAt": { "$date": "2024-01-19T09:30:00.000Z" },
+    "updatedAt": { "$date": "2024-01-19T09:30:00.000Z" }
+  },
+  {
+    "_id": { "$oid": "507f1f77bcf86cd799439016" },
+    "emp_name": "Emma Wilson",
+    "emp_id": "E006",
+    "emp_token": "EMP006",
+    "password": "$2a$10$UMS3I0cI0Jt2Y3H0q0t2kpZlU0lU3sA3lU3sA3lU3sA3lU3sA3lU3",
+    "location_type": "Home",
+    "ip_range": "192.168.100.0/24",
+    "usual_login_time": "10:00",
+    "usual_logout_time": "18:00",
+    "country": "United Kingdom",
+    "city": "London",
+    "verified_locations": [
+      {
+        "location_type": "Home",
+        "country": "United Kingdom",
+        "city": "London",
+        "ip_ranges": ["192.168.100.0/24"],
+        "is_primary": true,
+        "verified": true,
+        "added_date": { "$date": "2024-01-20T10:00:00.000Z" }
+      }
+    ],
+    "allowed_countries": ["United Kingdom", "France", "Germany"],
+    "location_verification_enabled": true,
+    "strict_mode": false,
+    "status": 1,
+    "createdAt": { "$date": "2024-01-20T10:00:00.000Z" },
+    "updatedAt": { "$date": "2024-01-20T10:00:00.000Z" }
+  },
+  {
+    "_id": { "$oid": "507f1f77bcf86cd799439017" },
+    "emp_name": "Alex Rodriguez",
+    "emp_id": "E007",
+    "emp_token": "EMP007",
+    "password": "$2a$10$TLR2H0bH9Is1X2G9p9s1joYkT0kT2rZ2kT2rZ2kT2rZ2kT2rZ2kT2",
+    "location_type": "Office",
+    "ip_range": "10.10.0.0/24",
+    "usual_login_time": "07:30",
+    "usual_logout_time": "15:30",
+    "country": "United States",
+    "city": "Los Angeles",
+    "verified_locations": [
+      {
+        "location_type": "Office",
+        "country": "United States",
+        "city": "Los Angeles",
+        "ip_ranges": ["10.10.0.0/24"],
+        "is_primary": true,
+        "verified": true,
+        "added_date": { "$date": "2024-01-21T07:30:00.000Z" }
+      }
+    ],
+    "allowed_countries": ["United States", "Mexico"],
+    "location_verification_enabled": true,
+    "strict_mode": false,
+    "status": 1,
+    "createdAt": { "$date": "2024-01-21T07:30:00.000Z" },
+    "updatedAt": { "$date": "2024-01-21T07:30:00.000Z" }
+  },
+  {
+    "_id": { "$oid": "507f1f77bcf86cd799439018" },
+    "emp_name": "Sophia Martinez",
+    "emp_id": "E008",
+    "emp_token": "EMP008",
+    "password": "$2a$10$SKQ1G0aG8Hr0W1F8o8r0inXjS0jS1qY1jS1qY1jS1qY1jS1qY1jS1",
+    "location_type": "Hybrid",
+    "ip_range": "192.168.200.0/24",
+    "usual_login_time": "09:30",
+    "usual_logout_time": "17:30",
+    "country": "United States",
+    "city": "Chicago",
+    "verified_locations": [
+      {
+        "location_type": "Office",
+        "country": "United States",
+        "city": "Chicago",
+        "ip_ranges": ["192.168.200.0/24"],
+        "is_primary": true,
+        "verified": true,
+        "added_date": { "$date": "2024-01-22T09:00:00.000Z" }
+      },
+      {
+        "location_type": "Home",
+        "country": "United States",
+        "city": "Chicago",
+        "ip_ranges": ["192.168.201.0/24"],
+        "is_primary": false,
+        "verified": true,
+        "added_date": { "$date": "2024-01-22T09:00:00.000Z" }
+      }
+    ],
+    "allowed_countries": ["United States"],
+    "location_verification_enabled": true,
+    "strict_mode": false,
+    "status": 1,
+    "createdAt": { "$date": "2024-01-22T09:00:00.000Z" },
+    "updatedAt": { "$date": "2024-01-22T09:00:00.000Z" }
+  },
+  {
+    "_id": { "$oid": "507f1f77bcf86cd799439019" },
+    "emp_name": "James Taylor",
+    "emp_id": "E009",
+    "emp_token": "EMP009",
+    "password": "$2a$10$RJP0F9ZF7Gq9V0E7n7q9hmWiR0iR0pX0iR0pX0iR0pX0iR0pX0iR0",
+    "location_type": "Office",
+    "ip_range": "172.30.0.0/24",
+    "usual_login_time": "08:00",
+    "usual_logout_time": "16:00",
+    "country": "Australia",
+    "city": "Sydney",
+    "verified_locations": [
+      {
+        "location_type": "Office",
+        "country": "Australia",
+        "city": "Sydney",
+        "ip_ranges": ["172.30.0.0/24"],
+        "is_primary": true,
+        "verified": true,
+        "added_date": { "$date": "2024-01-23T08:00:00.000Z" }
+      }
+    ],
+    "allowed_countries": ["Australia", "New Zealand"],
+    "location_verification_enabled": true,
+    "strict_mode": true,
+    "status": 1,
+    "createdAt": { "$date": "2024-01-23T08:00:00.000Z" },
+    "updatedAt": { "$date": "2024-01-23T08:00:00.000Z" }
+  },
+  {
+    "_id": { "$oid": "507f1f77bcf86cd799439020" },
+    "emp_name": "Olivia Brown",
+    "emp_id": "E010",
+    "emp_token": "EMP010",
+    "password": "$2a$10$QIO9E8YE6Fp8U9D6m6p8glVhQ0hQ9oW9hQ9oW9hQ9oW9hQ9oW9hQ9",
+    "location_type": "Home",
+    "ip_range": "",
+    "usual_login_time": "11:00",
+    "usual_logout_time": "19:00",
+    "country": "United States",
+    "city": "Austin",
+    "verified_locations": [
+      {
+        "location_type": "Home",
+        "country": "United States",
+        "city": "Austin",
+        "ip_ranges": [],
+        "is_primary": true,
+        "verified": true,
+        "added_date": { "$date": "2024-01-24T11:00:00.000Z" }
+      }
+    ],
+    "allowed_countries": ["United States"],
+    "location_verification_enabled": false,
+    "strict_mode": false,
+    "status": 1,
+    "createdAt": { "$date": "2024-01-24T11:00:00.000Z" },
+    "updatedAt": { "$date": "2024-01-24T11:00:00.000Z" }
+  }
+]
+
