@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
+import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { simulationAPI } from "../services/api";
 import socketService from "../services/socket";
@@ -196,10 +197,43 @@ const StatItem = styled.div`
   }
 `;
 
-const ConnectionStatus = styled.div`
+const TopBar = styled.div`
   position: fixed;
   top: 20px;
+  left: 20px;
   right: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 100;
+`;
+
+const NavButton = styled.button`
+  padding: 12px 24px;
+  background: rgba(139, 92, 246, 0.2);
+  border: 2px solid rgba(139, 92, 246, 0.4);
+  border-radius: 12px;
+  color: #c4b5fd;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  &:hover {
+    background: rgba(139, 92, 246, 0.3);
+    border-color: rgba(139, 92, 246, 0.6);
+    transform: translateY(-2px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+`;
+
+const ConnectionStatus = styled.div`
   padding: 12px 20px;
   background: ${(props) =>
     props.connected ? "rgba(16, 185, 129, 0.2)" : "rgba(239, 68, 68, 0.2)"};
@@ -235,6 +269,7 @@ const ConnectionStatus = styled.div`
 `;
 
 const SimulationPortal = () => {
+  const navigate = useNavigate();
   const [employeeToken, setEmployeeToken] = useState("EMP999");
   const [loading, setLoading] = useState({});
   const [stats, setStats] = useState({
@@ -286,6 +321,10 @@ const SimulationPortal = () => {
     }
   };
 
+  const goToLogin = () => {
+    navigate("/login");
+  };
+
   const simulateThreat = async (threatType, subType) => {
     const key = `${threatType}_${subType}`;
     setLoading((prev) => ({ ...prev, [key]: true }));
@@ -323,10 +362,16 @@ const SimulationPortal = () => {
 
   return (
     <PortalContainer>
-      <ConnectionStatus connected={connected}>
-        <div className="dot" />
-        {connected ? "Connected to Security Dashboard" : "Disconnected"}
-      </ConnectionStatus>
+      <TopBar>
+        <NavButton onClick={goToLogin}>
+          <span>🔐</span>
+          Go to Login
+        </NavButton>
+        <ConnectionStatus connected={connected}>
+          <div className="dot" />
+          {connected ? "Connected to Security Dashboard" : "Disconnected"}
+        </ConnectionStatus>
+      </TopBar>
 
       <Header>
         <h1>
