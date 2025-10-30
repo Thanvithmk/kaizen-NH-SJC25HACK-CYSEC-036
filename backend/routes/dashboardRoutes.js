@@ -146,34 +146,119 @@ router.get("/high-risk-employees", async (req, res) => {
 
 /**
  * @route   GET /api/dashboard/recent-activity
- * @desc    Get recent login activity
+ * @desc    Get recent activity (logins, downloads, geo alerts)
  * @access  Private
  */
 router.get("/recent-activity", async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 10;
 
-    const recentActivity = await LoginActivity.find()
+    // Fetch login activities
+    const loginActivities = await LoginActivity.find()
       .sort({ login_timestamp: -1 })
       .limit(limit)
       .lean();
 
-    // Enrich with employee names
-    const enrichedActivity = await Promise.all(
-      recentActivity.map(async (activity) => {
-        const employee = await EmployeePattern.findOne({
-          emp_token: activity.employee_token,
-        });
-        return {
-          ...activity,
-          employee_name: employee?.emp_name || "Unknown",
-        };
-      })
-    );
+    // Fetch bulk download alerts
+    const bulkDownloads = await BulkDownloadAlert.find()
+      .sort({ timestamp: -1 })
+      .limit(limit)
+      .lean();
+
+    // Fetch geographic alerts
+    const geoAlerts = await GeographicAlert.find()
+      .sort({ alert_timestamp: -1 })
+      .limit(limit)
+      .lean();
+
+    // Normalize and combine all activities
+    const allActivities = [];
+
+    // Add login activities
+    for (const activity of loginActivities) {
+      const employee = await EmployeePattern.findOne({
+        emp_token: activity.employee_token,
+      });
+      allActivities.push({
+        _id: activity._id,
+        activity_type: "login",
+        employee_token: activity.employee_token,
+        employee_name: employee?.emp_name || "Unknown",
+        timestamp: activity.login_timestamp,
+        status: activity.success_status,
+        ip_address: activity.ip_address,
+        location: activity.location,
+        city: activity.city,
+        country: activity.country,
+        details: {
+          logout_timestamp: activity.logout_timestamp,
+        },
+      });
+    }
+
+    // Add bulk download activities
+    for (const download of bulkDownloads) {
+      const employee = await EmployeePattern.findOne({
+        emp_token: download.employee_token,
+      });
+      allActivities.push({
+        _id: download._id,
+        activity_type: "bulk_download",
+        employee_token: download.employee_token,
+        employee_name: employee?.emp_name || "Unknown",
+        timestamp: download.timestamp,
+        status: download.risk_level,
+        ip_address: "N/A",
+        location: "File Download",
+        city: "N/A",
+        country: "N/A",
+        details: {
+          total_files: download.total_files,
+          total_size_mb: download.total_size_mb,
+          folder_path: download.folder_path,
+          risk_level: download.risk_level,
+        },
+      });
+    }
+
+    // Add geographic alerts
+    for (const geoAlert of geoAlerts) {
+      const employee = await EmployeePattern.findOne({
+        emp_token: geoAlert.employee_token,
+      });
+      allActivities.push({
+        _id: geoAlert._id,
+        activity_type: "geographic",
+        employee_token: geoAlert.employee_token,
+        employee_name: employee?.emp_name || "Unknown",
+        timestamp: geoAlert.alert_timestamp,
+        status: geoAlert.is_impossible_travel
+          ? "Impossible Travel"
+          : geoAlert.is_high_risk_country
+          ? "Risk Country"
+          : "Location Change",
+        ip_address: "N/A",
+        location: geoAlert.current_location?.city || "Unknown",
+        city: geoAlert.current_location?.city || "Unknown",
+        country: geoAlert.current_location?.country || "Unknown",
+        details: {
+          previous_location: geoAlert.previous_location,
+          distance_km: geoAlert.distance_km,
+          is_impossible_travel: geoAlert.is_impossible_travel,
+        },
+      });
+    }
+
+    // Sort all activities by timestamp (most recent first)
+    allActivities.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+    // Limit to requested number
+    const limitedActivities = allActivities.slice(0, limit);
 
     res.json({
       success: true,
-      activity: enrichedActivity,
+      activity: limitedActivities,
+      total: allActivities.length,
     });
   } catch (error) {
     res.status(500).json({

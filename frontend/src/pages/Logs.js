@@ -238,9 +238,9 @@ const Logs = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [stats, setStats] = useState({
     total: 0,
-    success: 0,
-    failed: 0,
-    active: 0,
+    login: 0,
+    downloads: 0,
+    geographic: 0,
   });
 
   const ITEMS_PER_PAGE = 15;
@@ -261,17 +261,17 @@ const Logs = () => {
 
         // Calculate stats
         const total = response.data.activity.length;
-        const success = response.data.activity.filter(
-          (l) => l.success_status === "Success"
+        const login = response.data.activity.filter(
+          (l) => l.activity_type === "login"
         ).length;
-        const failed = response.data.activity.filter(
-          (l) => l.success_status === "Failed"
+        const downloads = response.data.activity.filter(
+          (l) => l.activity_type === "bulk_download"
         ).length;
-        const active = response.data.activity.filter(
-          (l) => !l.logout_timestamp
+        const geographic = response.data.activity.filter(
+          (l) => l.activity_type === "geographic"
         ).length;
 
-        setStats({ total, success, failed, active });
+        setStats({ total, login, downloads, geographic });
       }
     } catch (error) {
       toast.error("Failed to load logs");
@@ -296,13 +296,13 @@ const Logs = () => {
   const getFilteredLogs = () => {
     let filtered = logs;
 
-    // Filter by status
-    if (filter === "success") {
-      filtered = filtered.filter((l) => l.success_status === "Success");
-    } else if (filter === "failed") {
-      filtered = filtered.filter((l) => l.success_status === "Failed");
-    } else if (filter === "active") {
-      filtered = filtered.filter((l) => !l.logout_timestamp);
+    // Filter by activity type
+    if (filter === "login") {
+      filtered = filtered.filter((l) => l.activity_type === "login");
+    } else if (filter === "downloads") {
+      filtered = filtered.filter((l) => l.activity_type === "bulk_download");
+    } else if (filter === "geographic") {
+      filtered = filtered.filter((l) => l.activity_type === "geographic");
     }
 
     // Filter by search term
@@ -313,7 +313,8 @@ const Logs = () => {
           l.employee_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           l.ip_address?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           l.city?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          l.country?.toLowerCase().includes(searchTerm.toLowerCase())
+          l.country?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          l.location?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
@@ -347,26 +348,28 @@ const Logs = () => {
       <Sidebar />
       <MainContent>
         <Header>
-          <h1>Login Activity Logs</h1>
-          <p>Comprehensive user login and session activity</p>
+          <h1>Activity Logs</h1>
+          <p>
+            Comprehensive user activity including logins, downloads, and alerts
+          </p>
         </Header>
 
         <StatsBar>
           <StatCard>
-            <div className="label">Total Logins</div>
+            <div className="label">Total Activities</div>
             <div className="value">{stats.total}</div>
           </StatCard>
           <StatCard>
-            <div className="label">Successful</div>
-            <div className="value">{stats.success}</div>
+            <div className="label">Login Activities</div>
+            <div className="value">{stats.login}</div>
           </StatCard>
           <StatCard>
-            <div className="label">Failed</div>
-            <div className="value">{stats.failed}</div>
+            <div className="label">File Downloads</div>
+            <div className="value">{stats.downloads}</div>
           </StatCard>
           <StatCard>
-            <div className="label">Active Sessions</div>
-            <div className="value">{stats.active}</div>
+            <div className="label">Geographic Alerts</div>
+            <div className="value">{stats.geographic}</div>
           </StatCard>
         </StatsBar>
 
@@ -378,34 +381,34 @@ const Logs = () => {
               setCurrentPage(1);
             }}
           >
-            All Logs
+            All Activities
           </FilterButton>
           <FilterButton
-            active={filter === "success"}
+            active={filter === "login"}
             onClick={() => {
-              setFilter("success");
+              setFilter("login");
               setCurrentPage(1);
             }}
           >
-            Successful
+            Logins
           </FilterButton>
           <FilterButton
-            active={filter === "failed"}
+            active={filter === "downloads"}
             onClick={() => {
-              setFilter("failed");
+              setFilter("downloads");
               setCurrentPage(1);
             }}
           >
-            Failed
+            File Downloads
           </FilterButton>
           <FilterButton
-            active={filter === "active"}
+            active={filter === "geographic"}
             onClick={() => {
-              setFilter("active");
+              setFilter("geographic");
               setCurrentPage(1);
             }}
           >
-            Active Sessions
+            Geographic Alerts
           </FilterButton>
           <SearchInput
             type="text"
@@ -426,13 +429,12 @@ const Logs = () => {
               <Table>
                 <TableHead>
                   <TableRow>
+                    <TableHeader>Activity Type</TableHeader>
                     <TableHeader>Employee Token</TableHeader>
                     <TableHeader>IP Address</TableHeader>
                     <TableHeader>Location</TableHeader>
-                    <TableHeader>City</TableHeader>
-                    <TableHeader>Country</TableHeader>
-                    <TableHeader>Login Time</TableHeader>
-                    <TableHeader>Logout Time</TableHeader>
+                    <TableHeader>Details</TableHeader>
+                    <TableHeader>Timestamp</TableHeader>
                     <TableHeader>Status</TableHeader>
                   </TableRow>
                 </TableHead>
@@ -440,23 +442,50 @@ const Logs = () => {
                   {getPaginatedLogs().map((log) => (
                     <TableRow key={log._id}>
                       <TableCell>
+                        <StatusBadge
+                          status={
+                            log.activity_type === "login"
+                              ? "Success"
+                              : log.activity_type === "bulk_download"
+                              ? "Warning"
+                              : "Failed"
+                          }
+                        >
+                          {log.activity_type === "login"
+                            ? "Login"
+                            : log.activity_type === "bulk_download"
+                            ? "Download"
+                            : "Geo Alert"}
+                        </StatusBadge>
+                      </TableCell>
+                      <TableCell>
                         <strong>{log.employee_token}</strong>
                       </TableCell>
                       <TableCell>{log.ip_address || "N/A"}</TableCell>
-                      <TableCell>{log.location || "Unknown"}</TableCell>
-                      <TableCell>{log.city || "Unknown"}</TableCell>
-                      <TableCell>{log.country || "Unknown"}</TableCell>
-                      <TableCell>{formatDate(log.login_timestamp)}</TableCell>
                       <TableCell>
-                        {log.logout_timestamp ? (
-                          formatDate(log.logout_timestamp)
-                        ) : (
-                          <StatusBadge status="Active">Active</StatusBadge>
-                        )}
+                        {log.city && log.country
+                          ? `${log.city}, ${log.country}`
+                          : log.location || "Unknown"}
                       </TableCell>
                       <TableCell>
-                        <StatusBadge status={log.success_status}>
-                          {log.success_status}
+                        {log.activity_type === "bulk_download"
+                          ? `${
+                              log.details?.total_files
+                            } files, ${log.details?.total_size_mb?.toFixed(
+                              2
+                            )} MB`
+                          : log.activity_type === "geographic"
+                          ? `Distance: ${log.details?.distance_km?.toFixed(
+                              0
+                            )} km`
+                          : log.details?.logout_timestamp
+                          ? "Session ended"
+                          : "Active session"}
+                      </TableCell>
+                      <TableCell>{formatDate(log.timestamp)}</TableCell>
+                      <TableCell>
+                        <StatusBadge status={log.status}>
+                          {log.status}
                         </StatusBadge>
                       </TableCell>
                     </TableRow>

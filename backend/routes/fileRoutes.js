@@ -166,36 +166,43 @@ router.get("/download/:filename", async (req, res) => {
       emp_token: employeeToken,
     });
 
-    // Evaluate risk if employee exists
+    // Evaluate risk
+    let riskAnalysis;
     if (employeePattern) {
-      const riskAnalysis = evaluateBulkDownload(downloadAlert, employeePattern);
+      riskAnalysis = evaluateBulkDownload(downloadAlert, employeePattern);
+    } else {
+      // Default risk analysis if employee pattern doesn't exist
+      riskAnalysis = {
+        total_risk_score: fileSizeMB >= 500 ? 60 : fileSizeMB >= 200 ? 40 : 20,
+        severity:
+          fileSizeMB >= 500 ? "High" : fileSizeMB >= 200 ? "Medium" : "Low",
+        anomalies_detected: [`File download: ${fileSizeMB.toFixed(2)}MB`],
+      };
+    }
 
-      // Create threat alert if risk is significant
-      if (riskAnalysis.total_risk_score > 30) {
-        const threat = await ActiveThreat.create({
-          employee_token: employeeToken,
-          alert_type: "bulk",
-          risk_score: riskAnalysis.total_risk_score,
-          original_alert_id: downloadAlert._id,
-          alert_date_time: new Date(),
-          solved: "N",
-          details: {
-            file_count: 1,
-            total_size_mb: fileSizeMB,
-            file_path: filePath,
-            filename: sanitizedFilename,
-            anomalies: riskAnalysis.anomalies_detected,
-            is_sensitive: isSensitive,
-            severity_level: riskAnalysis.severity,
-          },
-        });
+    // Create threat alert for all bulk downloads
+    const threat = await ActiveThreat.create({
+      employee_token: employeeToken,
+      alert_type: "bulk",
+      risk_score: riskAnalysis.total_risk_score,
+      original_alert_id: downloadAlert._id,
+      alert_date_time: new Date(),
+      solved: "N",
+      details: {
+        file_count: 1,
+        total_size_mb: fileSizeMB,
+        file_path: filePath,
+        filename: sanitizedFilename,
+        anomalies: riskAnalysis.anomalies_detected,
+        is_sensitive: isSensitive,
+        severity_level: riskAnalysis.severity,
+      },
+    });
 
-        // Emit real-time update
-        const io = req.app.get("io");
-        if (io) {
-          io.emit("new_threat", threat);
-        }
-      }
+    // Emit real-time update
+    const io = req.app.get("io");
+    if (io) {
+      io.emit("new_threat", threat);
     }
 
     // Send file
@@ -276,35 +283,56 @@ router.post("/bulk-download", async (req, res) => {
       emp_token: employee_token,
     });
 
+    // Evaluate risk
+    let riskAnalysis;
     if (employeePattern) {
-      const riskAnalysis = evaluateBulkDownload(downloadAlert, employeePattern);
+      riskAnalysis = evaluateBulkDownload(downloadAlert, employeePattern);
+    } else {
+      // Default risk analysis if employee pattern doesn't exist
+      riskAnalysis = {
+        total_risk_score:
+          totalSizeMB >= 500
+            ? 70
+            : totalSizeMB >= 200 || filenames.length >= 30
+            ? 50
+            : 30,
+        severity:
+          totalSizeMB >= 500
+            ? "High"
+            : totalSizeMB >= 200 || filenames.length >= 30
+            ? "Medium"
+            : "Low",
+        anomalies_detected: [
+          `Bulk download: ${filenames.length} files, ${totalSizeMB.toFixed(
+            2
+          )}MB`,
+        ],
+      };
+    }
 
-      // Create threat alert
-      if (riskAnalysis.total_risk_score > 30) {
-        const threat = await ActiveThreat.create({
-          employee_token: employee_token,
-          alert_type: "bulk",
-          risk_score: riskAnalysis.total_risk_score,
-          original_alert_id: downloadAlert._id,
-          alert_date_time: new Date(),
-          solved: "N",
-          details: {
-            file_count: filenames.length,
-            total_size_mb: totalSize / (1024 * 1024),
-            file_path: DATA_FILES_DIR,
-            filenames: filenames,
-            anomalies: riskAnalysis.anomalies_detected,
-            is_sensitive: true,
-            severity_level: riskAnalysis.severity,
-          },
-        });
+    // Create threat alert for all bulk downloads
+    const threat = await ActiveThreat.create({
+      employee_token: employee_token,
+      alert_type: "bulk",
+      risk_score: riskAnalysis.total_risk_score,
+      original_alert_id: downloadAlert._id,
+      alert_date_time: new Date(),
+      solved: "N",
+      details: {
+        file_count: filenames.length,
+        total_size_mb: totalSize / (1024 * 1024),
+        file_path: DATA_FILES_DIR,
+        filenames: filenames,
+        anomalies: riskAnalysis.anomalies_detected,
+        is_sensitive: true,
+        severity_level: riskAnalysis.severity,
+      },
+    });
 
-        // Emit real-time update
-        const io = req.app.get("io");
-        if (io) {
-          io.emit("new_threat", threat);
-        }
-      }
+    // Emit real-time update
+    const io = req.app.get("io");
+    if (io) {
+      io.emit("new_threat", threat);
     }
 
     res.json({
