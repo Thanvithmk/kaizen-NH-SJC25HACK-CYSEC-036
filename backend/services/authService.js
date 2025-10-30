@@ -99,6 +99,23 @@ class AuthService {
         risk_level: "Low",
       });
 
+      // Auto-resolve any existing failed login threats on successful login
+      const existingFailedLoginThreat = await ActiveThreat.findOne({
+        employee_token,
+        alert_type: "login",
+        solved: "N",
+        "details.failed_attempts": { $exists: true },
+      });
+
+      if (existingFailedLoginThreat) {
+        existingFailedLoginThreat.solved = "Y";
+        existingFailedLoginThreat.last_reviewed = new Date();
+        await existingFailedLoginThreat.save();
+        console.log(
+          `✅ Auto-resolved failed login threat for ${employee_token} after successful login`
+        );
+      }
+
       // Analyze geographic anomaly
       if (previousLogin) {
         const anomaly = await locationService.analyzeGeographicAnomaly(
@@ -236,20 +253,52 @@ class AuthService {
       risk_level: riskData.riskLevel,
     });
 
-    // Create threat if high risk
-    if (riskData.riskScore >= 25) {
-      await ActiveThreat.create({
-        alert_date_time: new Date(),
-        risk_score: riskData.riskScore,
-        alert_type: "login",
+    // Handle Active Threat creation/update based on failed attempts
+    if (failedCount >= 3) {
+      // Check if an existing unsolved login threat exists for this employee
+      const existingThreat = await ActiveThreat.findOne({
         employee_token,
+        alert_type: "login",
         solved: "N",
-        original_alert_id: loginActivity._id,
-        details: {
+        "details.failed_attempts": { $exists: true },
+      }).sort({ alert_date_time: -1 });
+
+      if (existingThreat) {
+        // Update existing threat with new risk score and details
+        existingThreat.risk_score = riskData.riskScore;
+        existingThreat.alert_date_time = new Date();
+        existingThreat.original_alert_id = loginActivity._id;
+        existingThreat.details = {
           failed_attempts: failedCount,
           reasons: riskData.reasons,
-        },
-      });
+          severity_escalated: failedCount >= 5,
+          last_failure_timestamp: new Date(),
+        };
+        await existingThreat.save();
+
+        console.log(
+          `🔄 Updated existing login threat for ${employee_token}: ${failedCount} failures, Risk Score: ${riskData.riskScore}`
+        );
+      } else {
+        // Create new threat (first time reaching 3 failures)
+        await ActiveThreat.create({
+          alert_date_time: new Date(),
+          risk_score: riskData.riskScore,
+          alert_type: "login",
+          employee_token,
+          solved: "N",
+          original_alert_id: loginActivity._id,
+          details: {
+            failed_attempts: failedCount,
+            reasons: riskData.reasons,
+            first_failure_threshold: true,
+          },
+        });
+
+        console.log(
+          `🚨 New login threat created for ${employee_token}: ${failedCount} failures, Risk Score: ${riskData.riskScore}`
+        );
+      }
     }
   }
 
@@ -355,4 +404,3 @@ class AuthService {
 }
 
 module.exports = new AuthService();
-

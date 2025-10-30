@@ -86,15 +86,15 @@ class RuleEngine {
     const reasons = [];
 
     // Failed attempts scoring
-    if (failed_attempts_count > 10) {
-      riskScore += 50;
+    if (failed_attempts_count >= 10) {
+      riskScore += 75;
       reasons.push("Critical failed login attempts (10+)");
-    } else if (failed_attempts_count >= 6) {
-      riskScore += 35;
-      reasons.push("High failed login attempts (6-10)");
+    } else if (failed_attempts_count >= 5) {
+      riskScore += 50;
+      reasons.push("High failed login attempts (5+)");
     } else if (failed_attempts_count >= 3) {
       riskScore += 25;
-      reasons.push("Multiple failed login attempts (3-5)");
+      reasons.push("Medium failed login attempts (3-4)");
     }
 
     // Failed then success pattern (high risk)
