@@ -204,7 +204,13 @@ const FileDownloads = () => {
       setLoading(true);
       const response = await fileAPI.getFileList();
       if (response.success) {
-        setFiles(response.files);
+        // Map files and add sizeMB property
+        const filesWithSize = response.files.map((file) => ({
+          ...file,
+          sizeMB: parseFloat(file.sizeInMB),
+          description: getFileDescription(file.filename),
+        }));
+        setFiles(filesWithSize);
       }
     } catch (error) {
       toast.error("Failed to load files");
@@ -212,6 +218,23 @@ const FileDownloads = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const getFileDescription = (filename) => {
+    const descMap = {
+      "Confidential_Client_Data.csv":
+        "Sensitive customer information and records",
+      "Payroll_Records_2024.xlsx": "Employee salary and payment details",
+      "Financial_Summary_2024.pdf": "Company financial report for 2024",
+      "Employee_Handbook_2024.pdf": "Company policies and procedures",
+      "Product_Designs_Archive.zip": "Product design files and assets",
+      "Source_Code_Repository.zip": "Source code backup archive",
+      "Customer_Database_Report.xlsx": "Customer database analytics",
+      "Project_Timeline.xlsx": "Project schedules and milestones",
+      "Meeting_Notes_Q1.docx": "Q1 meeting minutes and notes",
+      "Backup_Database_Full.zip": "Full database backup file",
+    };
+    return descMap[filename] || "Company document";
   };
 
   const handleDownload = (file) => {
@@ -252,13 +275,13 @@ const FileDownloads = () => {
 
   const getFileIcon = (type) => {
     const iconMap = {
-      pdf: "📄",
-      docx: "📝",
-      xlsx: "📊",
-      csv: "📈",
-      zip: "🗜️",
-      json: "📋",
-      txt: "📃",
+      ".pdf": "📄",
+      ".docx": "📝",
+      ".xlsx": "📊",
+      ".csv": "📈",
+      ".zip": "🗜️",
+      ".json": "📋",
+      ".txt": "📃",
     };
     return iconMap[type] || "📁";
   };
@@ -312,7 +335,11 @@ const FileDownloads = () => {
                 </InfoRow>
                 <InfoRow>
                   <span className="label">Type:</span>
-                  <span className="value">{file.type.toUpperCase()}</span>
+                  <span className="value">
+                    {file.type
+                      ? file.type.replace(".", "").toUpperCase()
+                      : "FILE"}
+                  </span>
                 </InfoRow>
               </FileInfo>
               <DownloadButton

@@ -29,11 +29,11 @@ export const employeeAPI = {
 export const fileAPI = {
   // Get list of available files
   getFileList: async () => {
-    const response = await api.get("/files/list");
+    const response = await api.get("/files");
     return response.data;
   },
 
-  // Download a file (returns blob for download)
+  // Download a file (returns URL and logs in backend)
   downloadFile: (filename, employeeToken) => {
     const url = `${API_BASE_URL}/files/download/${filename}?employee_token=${employeeToken}`;
     return url;

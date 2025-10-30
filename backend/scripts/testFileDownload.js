@@ -1,194 +1,147 @@
 require("dotenv").config();
 const mongoose = require("mongoose");
+const axios = require("axios");
+
 const BulkDownloadAlert = require("../models/BulkDownloadAlert");
 const ActiveThreat = require("../models/ActiveThreat");
-const EmployeePattern = require("../models/EmployeePattern");
-const { evaluateBulkDownload } = require("../utils/ruleEngine");
 
-// MongoDB Connection - use the same as server
-const MONGO_URI = process.env.MONGODB_URI;
-
-async function testFileDownloadFlow() {
+async function testFileDownload() {
   try {
-    console.log("🧪 Testing File Download Risk Analysis Flow...\n");
-
     // Connect to MongoDB
-    await mongoose.connect(MONGO_URI);
+    await mongoose.connect(process.env.MONGODB_URI);
     console.log("✅ Connected to MongoDB\n");
 
     // Test employee token
-    const testEmployeeToken = "EMP001";
+    const employeeToken = "EMP001";
+    const testFile = "Employee_Handbook_2024.pdf";
 
-    // Ensure test employee exists
-    let employee = await EmployeePattern.findOne({
-      emp_token: testEmployeeToken,
+    console.log("=".repeat(60));
+    console.log("FILE DOWNLOAD TEST");
+    console.log("=".repeat(60));
+
+    // Check current alerts
+    console.log("\n📊 BEFORE DOWNLOAD:");
+    const beforeAlerts = await BulkDownloadAlert.find({
+      employee_token: employeeToken,
     });
-    if (!employee) {
-      console.log("⚠️  Employee EMP001 not found, creating...");
-      employee = await EmployeePattern.create({
-        emp_token: testEmployeeToken,
-        emp_name: "John Doe",
-        password: "$2a$10$hashedpassword",
-        typical_login_hours: [9, 10, 11, 12, 13, 14, 15, 16, 17],
-        typical_locations: ["New York, USA"],
-      });
-      console.log("✅ Test employee created\n");
-    }
+    const beforeThreats = await ActiveThreat.find({
+      employee_token: employeeToken,
+      alert_type: "bulk",
+    });
+    console.log(`   Bulk Download Alerts: ${beforeAlerts.length}`);
+    console.log(`   Active Threats (bulk): ${beforeThreats.length}`);
 
-    // Test scenarios with different file sizes
-    const testScenarios = [
-      {
-        name: "Small File (Low Risk)",
-        filename: "Employee_Handbook_2024.pdf",
-        sizeMB: 2.5,
-        expectedRisk: "Low",
-      },
-      {
-        name: "Medium File (Medium Risk)",
-        filename: "Customer_Database_Report.xlsx",
-        sizeMB: 250,
-        expectedRisk: "Medium",
-      },
-      {
-        name: "Large File (High Risk)",
-        filename: "Payroll_Records_2024.xlsx",
-        sizeMB: 1200,
-        expectedRisk: "High/Critical",
-      },
-      {
-        name: "Huge File (Critical Risk)",
-        filename: "Backup_Database_Full.zip",
-        sizeMB: 5000,
-        expectedRisk: "Critical",
-      },
-    ];
+    // Simulate file download by calling the API
+    console.log("\n📥 SIMULATING DOWNLOAD:");
+    console.log(`   File: ${testFile}`);
+    console.log(`   Employee: ${employeeToken}`);
 
-    for (const scenario of testScenarios) {
-      console.log(`\n📦 Testing: ${scenario.name}`);
-      console.log(`   File: ${scenario.filename}`);
-      console.log(`   Size: ${scenario.sizeMB} MB`);
-      console.log(`   Expected Risk: ${scenario.expectedRisk}\n`);
+    try {
+      const downloadUrl = `http://localhost:5000/api/files/download/${testFile}?employee_token=${employeeToken}`;
+      console.log(`   URL: ${downloadUrl}`);
 
-      // 1. Create BulkDownloadAlert record
-      const downloadAlert = await BulkDownloadAlert.create({
-        employee_token: testEmployeeToken,
-        folder_path: `/datafiles/${scenario.filename}`,
-        total_files: 1,
-        total_size_mb: scenario.sizeMB,
-        timestamp: new Date(),
-        risk_level:
-          scenario.sizeMB >= 1000
-            ? "Critical"
-            : scenario.sizeMB >= 500
-            ? "High"
-            : scenario.sizeMB >= 200
-            ? "Medium"
-            : "Low",
+      const response = await axios.get(downloadUrl, {
+        responseType: "stream",
+        timeout: 5000,
       });
 
-      console.log(`   ✅ BulkDownloadAlert created:`);
-      console.log(`      ID: ${downloadAlert._id}`);
-      console.log(`      Risk Level: ${downloadAlert.risk_level}`);
-      console.log(`      Total Size: ${downloadAlert.total_size_mb} MB`);
+      console.log(
+        `   ✅ API Response: ${response.status} ${response.statusText}`
+      );
 
-      // 2. Evaluate risk using Rule Engine
-      const riskAnalysis = evaluateBulkDownload(downloadAlert, employee);
-
-      console.log(`\n   📊 Rule Engine Analysis:`);
-      console.log(`      Risk Score: ${riskAnalysis.total_risk_score}`);
-      console.log(`      Severity: ${riskAnalysis.severity}`);
-      console.log(`      Anomalies Detected:`);
-      riskAnalysis.anomalies_detected.forEach((anomaly) => {
-        console.log(`         - ${anomaly}`);
-      });
-
-      // 3. Create ActiveThreat if risk is significant
-      if (riskAnalysis.total_risk_score > 30) {
-        const threat = await ActiveThreat.create({
-          employee_token: testEmployeeToken,
-          alert_type: "bulk",
-          risk_score: riskAnalysis.total_risk_score,
-          original_alert_id: downloadAlert._id,
-          alert_date_time: new Date(),
-          solved: "N",
-          details: {
-            file_count: 1,
-            total_size_mb: scenario.sizeMB,
-            filename: scenario.filename,
-            anomalies: riskAnalysis.anomalies_detected,
-            severity_level: riskAnalysis.severity,
-          },
-        });
-
-        console.log(`\n   🚨 ActiveThreat created:`);
-        console.log(`      Threat ID: ${threat._id}`);
-        console.log(`      Risk Score: ${threat.risk_score}`);
-        console.log(`      Alert Type: ${threat.alert_type}`);
-        console.log(`      Solved: ${threat.solved}`);
+      // Wait a moment for database writes
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    } catch (apiError) {
+      if (apiError.code === "ECONNREFUSED") {
+        console.log("   ⚠️  Backend server not running!");
+        console.log("   Run: cd backend && npm start");
       } else {
-        console.log(`\n   ✅ No threat created (risk score below threshold)`);
+        console.log(`   ⚠️  API Error: ${apiError.message}`);
       }
-
-      console.log(`\n   ${"=".repeat(60)}`);
     }
 
-    // Display summary from database
-    console.log(`\n\n📊 DATABASE SUMMARY:`);
-    console.log(`${"=".repeat(60)}\n`);
-
-    const totalAlerts = await BulkDownloadAlert.countDocuments({
-      employee_token: testEmployeeToken,
+    // Check alerts after download
+    console.log("\n📊 AFTER DOWNLOAD:");
+    const afterAlerts = await BulkDownloadAlert.find({
+      employee_token: employeeToken,
     });
-    const totalThreats = await ActiveThreat.countDocuments({
-      employee_token: testEmployeeToken,
+    const afterThreats = await ActiveThreat.find({
+      employee_token: employeeToken,
       alert_type: "bulk",
-      solved: "N",
     });
 
-    console.log(`   Total BulkDownloadAlerts: ${totalAlerts}`);
-    console.log(`   Total ActiveThreats: ${totalThreats}`);
+    console.log(
+      `   Bulk Download Alerts: ${afterAlerts.length} (${
+        afterAlerts.length - beforeAlerts.length > 0
+          ? "+" + (afterAlerts.length - beforeAlerts.length)
+          : "no change"
+      })`
+    );
+    console.log(
+      `   Active Threats (bulk): ${afterThreats.length} (${
+        afterThreats.length - beforeThreats.length > 0
+          ? "+" + (afterThreats.length - beforeThreats.length)
+          : "no change"
+      })`
+    );
 
-    // Show recent alerts
-    const recentAlerts = await BulkDownloadAlert.find({
-      employee_token: testEmployeeToken,
-    })
-      .sort({ timestamp: -1 })
-      .limit(5);
+    // Show most recent alert
+    if (afterAlerts.length > 0) {
+      const latestAlert = afterAlerts[afterAlerts.length - 1];
+      console.log("\n📋 LATEST ALERT:");
+      console.log(`   ID: ${latestAlert._id}`);
+      console.log(`   Employee: ${latestAlert.employee_token}`);
+      console.log(`   Files: ${latestAlert.total_files}`);
+      console.log(`   Size: ${latestAlert.total_size_mb.toFixed(2)} MB`);
+      console.log(`   Risk Level: ${latestAlert.risk_level}`);
+      console.log(`   Date: ${latestAlert.alert_date_time}`);
 
-    console.log(`\n   Recent Download Alerts:`);
-    recentAlerts.forEach((alert, index) => {
-      console.log(
-        `      ${index + 1}. ${alert.total_size_mb} MB - Risk: ${
-          alert.risk_level
-        }`
-      );
-    });
+      if (latestAlert.details) {
+        console.log(`   Filename: ${latestAlert.details.filename}`);
+        console.log(
+          `   Cumulative Files: ${latestAlert.details.cumulative_files}`
+        );
+        console.log(
+          `   Cumulative Size: ${latestAlert.details.cumulative_size_mb?.toFixed(
+            2
+          )} MB`
+        );
+      }
+    }
 
-    // Show recent threats
-    const recentThreats = await ActiveThreat.find({
-      employee_token: testEmployeeToken,
-      alert_type: "bulk",
-    })
-      .sort({ alert_date_time: -1 })
-      .limit(5);
+    // Show most recent threat
+    if (afterThreats.length > 0) {
+      const latestThreat = afterThreats[afterThreats.length - 1];
+      console.log("\n🚨 LATEST THREAT:");
+      console.log(`   ID: ${latestThreat._id}`);
+      console.log(`   Employee: ${latestThreat.employee_token}`);
+      console.log(`   Risk Score: ${latestThreat.risk_score}`);
+      console.log(`   Alert Type: ${latestThreat.alert_type}`);
+      console.log(`   Solved: ${latestThreat.solved}`);
+      console.log(`   Date: ${latestThreat.alert_date_time}`);
 
-    console.log(`\n   Recent Active Threats:`);
-    recentThreats.forEach((threat, index) => {
-      console.log(
-        `      ${index + 1}. Risk Score: ${threat.risk_score} - Details: ${
-          threat.details?.filename || "N/A"
-        }`
-      );
-    });
+      if (latestThreat.details) {
+        console.log(`   Total Files: ${latestThreat.details.total_files}`);
+        console.log(
+          `   Total Size: ${latestThreat.details.total_size_mb?.toFixed(2)} MB`
+        );
+        console.log(`   Current File: ${latestThreat.details.current_file}`);
+        console.log(
+          `   Risk Factors: ${latestThreat.details.risk_factors?.join(", ")}`
+        );
+      }
+    }
 
-    console.log(`\n\n✨ Test completed successfully!\n`);
+    console.log("\n" + "=".repeat(60));
+    console.log("✅ Test Complete");
+    console.log("=".repeat(60));
   } catch (error) {
-    console.error("❌ Error during test:", error);
+    console.error("\n❌ Error:", error.message);
+    console.error(error);
   } finally {
     await mongoose.connection.close();
-    console.log("📊 MongoDB connection closed");
+    console.log("\n🔌 Disconnected from MongoDB");
   }
 }
 
-// Run the test
-testFileDownloadFlow();
+testFileDownload();

@@ -152,13 +152,8 @@ router.get("/download/:filename", async (req, res) => {
       total_size_mb: fileSizeMB,
       timestamp: new Date(),
       risk_level:
-        fileSizeMB >= 1000
-          ? "Critical"
-          : fileSizeMB >= 500
-          ? "High"
-          : fileSizeMB >= 200
-          ? "Medium"
-          : "Low",
+        fileSizeMB >= 500 ? "High" : fileSizeMB >= 200 ? "Medium" : "Low",
+      status: "New",
     });
 
     // Get employee pattern
@@ -191,10 +186,22 @@ router.get("/download/:filename", async (req, res) => {
         });
 
         // Emit real-time update
-        const io = req.app.get("io");
-        if (io) {
-          io.emit("new_threat", threat);
+        if (global.emitAlert) {
+          global.emitAlert({
+            type: "bulk",
+            threat,
+            message: `File download: ${sanitizedFilename} (${fileSizeMB.toFixed(
+              2
+            )}MB)`,
+            employee_token: employeeToken,
+          });
         }
+
+        console.log(
+          `⚠️  Threat created for file download: ${sanitizedFilename} (${fileSizeMB.toFixed(
+            2
+          )}MB) - Risk: ${riskAnalysis.total_risk_score}`
+        );
       }
     }
 
